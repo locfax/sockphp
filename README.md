@@ -1,3 +1,3 @@
 # sock
 
-php framework for swoole
+php framework for swoole websocket
