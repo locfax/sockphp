@@ -58,10 +58,11 @@ class Application {
      * @param $path
      * @param $framedata
      * @param $frame
-     * @return string
+     * @return array
      */
-    public function request($path, $framedata, $frame) {
-        $data = $this->dispatching($path, $framedata, $frame);
+    public function request($frame) {
+        $framedata = json_decode($frame->data, true);
+        $data = $this->dispatching($framedata['todo'], $framedata, $frame);
         $this->finish();
         return $data;
     }
@@ -81,7 +82,7 @@ class Application {
         if (defined('AUTH') && AUTH) {
             $allow = Rbac::check($controllerName, $actionName, AUTH);
             if (!$allow) {
-                return '["msg":"你没有权限访问 "]';
+                return ['fd' => $frame->fd, "ret" => ['msg' => "你没有权限访问 "]];
             }
         }
         return $this->execute($controllerName, $actionName, $framedata, $frame);
@@ -102,15 +103,15 @@ class Application {
             $controller = new $controllerClass($framedata, $frame);
             return call_user_func([$controller, $actionMethod]);
         } catch (Exception\Exception $exception) { //普通异常
-            return $this->exception($exception);
+            return $this->exception($exception, $frame);
         } catch (Exception\DbException $exception) { //db异常
-            return $this->exception($exception);
+            return $this->exception($exception, $frame);
         } catch (Exception\CacheException $exception) { //cache异常
-            return $this->exception($exception);
+            return $this->exception($exception, $frame);
         } catch (\ErrorException $exception) {
-            return $this->exception($exception);
+            return $this->exception($exception, $frame);
         } catch (\Throwable $exception) { //PHP7
-            return $this->exception($exception);
+            return $this->exception($exception, $frame);
         }
     }
 
@@ -118,10 +119,10 @@ class Application {
      * @param $exception
      * @param $response
      */
-    private function exception($exception) {
+    private function exception($exception, $frame) {
         $data = $this->exception2str($exception);
-        $res = ['errcode' => 1 , 'errmsg' => $data];
-        return json_encode($res);
+        $res = ['errcode' => 1, 'errmsg' => $data];
+        return ['fd' => $frame->fd, 'ret' => $res];
     }
 
     /**

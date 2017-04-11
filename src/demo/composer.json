@@ -1,0 +1,16 @@
+{
+  "name": "locphp/sock-cli",
+  "description": "php framework for swoole socket",
+  "keywords": [
+    "framework",
+    "swoole",
+    "socket"
+  ],
+  "license": "MIT",
+  "type": "project",
+  "require": {
+    "locphp/sock": "^0.22",
+    "monolog/monolog": "^1.17",
+    "predis/predis": "^1.0"
+  }
+}
