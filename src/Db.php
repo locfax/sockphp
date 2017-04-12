@@ -1,6 +1,6 @@
 <?php
 
-namespace Sock;
+namespace Sockphp;
 
 class Db {
 

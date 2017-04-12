@@ -1,8 +1,8 @@
 <?php
 
-namespace Sock;
+namespace Sockphp;
 
-use \Sock\Exception;
+use \Sockphp\Exception;
 
 class Rbac {
 

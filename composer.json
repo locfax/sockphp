@@ -1,8 +1,8 @@
 {
-  "name": "locphp/sock",
+  "name": "locphp/sockphp",
   "description": "Socket Framework",
   "keywords": ["framework","swoole", "socket"],
-  "homepage": "https://github.com/locphp/sock",
+  "homepage": "https://github.com/locphp/sockphp",
   "license": "MIT",
   "authors": [
     {
@@ -19,7 +19,7 @@
     "monolog/monolog": "Allows more advanced logging of the application flow"
   },
   "autoload": {
-    "psr-4": {"Sock\\": "src"},
+    "psr-4": {"Sockphp\\": "src"},
     "files": ["src/constant.php", "src/function.php", "src/utils.php"]
   }
 }

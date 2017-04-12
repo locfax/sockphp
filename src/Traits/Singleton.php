@@ -1,8 +1,8 @@
 <?php
 
-namespace Sock\Traits;
+namespace Sockphp\Traits;
 
-use \Sock\Exception;
+use \Sockphp\Exception;
 
 trait Singleton {
 

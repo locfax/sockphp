@@ -1,10 +1,10 @@
 <?php
 
-namespace Sock\Helper;
+namespace Sockphp\Helper;
 
 class Locker {
 
-    use \Sock\Traits\Singleton;
+    use \Sockphp\Traits\Singleton;
 
     const dsn = 'general';
 
@@ -56,12 +56,12 @@ class Locker {
         if ('file' == getini('cache/cacher')) {
             return self::dblock($cmd, $name, $ttl);
         }
-        return \Sock\Context::cache($cmd, 'process_' . $name, time(), $ttl);
+        return \Sockphp\Context::cache($cmd, 'process_' . $name, time(), $ttl);
     }
 
     private static function dblock($cmd, $name, $ttl = 0) {
         $ret = '';
-        $db = \Sock\Db::dbm(self::dsn);
+        $db = \Sockphp\Db::dbm(self::dsn);
         switch ($cmd) {
             case 'set':
                 $ret = $db->replace('common_process', ['processid' => $name, 'expiry' => time() + $ttl]);

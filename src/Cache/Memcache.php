@@ -1,10 +1,10 @@
 <?php
 
-namespace Sock\Cache;
+namespace Sockphp\Cache;
 
 class Memcache {
 
-    use \Sock\Traits\Singleton;
+    use \Sockphp\Traits\Singleton;
 
     public $enable = false;
     private $_link = null;

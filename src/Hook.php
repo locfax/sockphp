@@ -1,6 +1,6 @@
 <?php
 
-namespace Sock;
+namespace Sockphp;
 
 class Hook {
 
@@ -104,7 +104,7 @@ class Hook {
      */
     public static function helper($name, $isClass = false) {
         if ($isClass) {
-            return self::loadClass('Helper/' . $name, "\\Sock\\Helper\\{$name}");
+            return self::loadClass('Helper/' . $name, "\\Sockphp\\Helper\\{$name}");
         }
         return self::loadFile('Helper/' . $name);
     }

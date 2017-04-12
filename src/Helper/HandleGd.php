@@ -1,6 +1,6 @@
 <?php
 
-namespace Sock\Helper;
+namespace Sockphp\Helper;
 
 
 class HandleGd {

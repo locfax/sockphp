@@ -1,12 +1,12 @@
 <?php
 
-namespace Sock\Cache;
+namespace Sockphp\Cache;
 
-use \Sock\Exception;
+use \Sockphp\Exception;
 
 class File {
 
-    use \Sock\Traits\Singleton;
+    use \Sockphp\Traits\Singleton;
 
     public $enable = false;
 
@@ -58,7 +58,7 @@ class File {
 
     public function clear() {
         $cachedir = getini('data/_cache');
-        $files = \Sock\Helper\File::getInstance()->list_files($cachedir);
+        $files = \Sockphp\Helper\File::getInstance()->list_files($cachedir);
         foreach ($files as $file) {
             unlink($cachedir . $file);
         }

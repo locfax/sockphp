@@ -14,7 +14,7 @@ if (!extension_loaded('swoole')) {
 
 function app_start($config) {
 
-    $app = new \Sock\Application();
+    $app = new \Sockphp\Application();
 
     $app->steup(APP); //注册命名空间
 
@@ -36,10 +36,7 @@ function app_start($config) {
     });
 
     $server->on('message', function ($server, $frame) use ($app) {
-        $data = $app->request($frame);
-        if($data['fd']) {
-            $server->push($data['fd'], output_json($data['ret']));
-        }
+        $app->request($server, $frame);
     });
 
     $server->on('close', function ($server, $fd) {

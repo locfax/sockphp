@@ -1,10 +1,10 @@
 <?php
 
-namespace Sock\Helper;
+namespace Sockphp\Helper;
 
 class File {
 
-    use \Sock\Traits\Singleton;
+    use \Sockphp\Traits\Singleton;
 
     public function mk_dir($path, $mode = DIR_WRITE_MODE) {
         if (!is_dir($path)) {

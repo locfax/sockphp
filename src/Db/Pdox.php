@@ -1,8 +1,8 @@
 <?php
 
-namespace Sock\Db;
+namespace Sockphp\Db;
 
-use \Sock\Exception;
+use \Sockphp\Exception;
 
 class Pdox {
 

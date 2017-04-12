@@ -1,10 +1,10 @@
 <?php
 
-namespace Sock\Helper;
+namespace Sockphp\Helper;
 
 class Arrmap {
 
-    use \Sock\Traits\Singleton;
+    use \Sockphp\Traits\Singleton;
 
     //php5.5+自带这个函数 只能处理二维
     //取出数组的指定列值

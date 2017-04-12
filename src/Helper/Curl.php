@@ -1,10 +1,10 @@
 <?php
 
-namespace Sock\Helper;
+namespace Sockphp\Helper;
 
 class Curl {
 
-    use \Sock\Traits\Singleton;
+    use \Sockphp\Traits\Singleton;
 
     public function send($url, $data = '', $httphead = [], $gzip = false, $charset = 'UTF-8', $rethead = false, $retsession = false) {
         $ch = curl_init();

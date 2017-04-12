@@ -1,10 +1,10 @@
 <?php
 
-namespace Sock\Helper;
+namespace Sockphp\Helper;
 
 class Uploader {
 
-    use \Sock\Traits\Singleton;
+    use \Sockphp\Traits\Singleton;
 
     private $_files = [];
     private $_count = 0;

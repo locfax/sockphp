@@ -2,7 +2,7 @@
 
 //keypath  path1/path2/path3
 function getini($key) {
-    $_CFG = Sock\Context::mergeVars('cfg');
+    $_CFG = Sockphp\Context::mergeVars('cfg');
     $k = explode('/', $key);
     switch (count($k)) {
         case 1:
@@ -31,11 +31,11 @@ function modealdata($cachekey, $reset = false) {
         return false;
     }
     if (!$reset) {
-        $data = \Sock\Context::cache('get', $cachekey);
+        $data = \Sockphp\Context::cache('get', $cachekey);
         if (is_null($data)) {
             $dataclass = '\\Model\\Data\\' . ucfirst($cachekey);
             $data = $dataclass::getInstance()->getdata();
-            \Sock\Context::cache('set', $cachekey, output_json($data));
+            \Sockphp\Context::cache('set', $cachekey, output_json($data));
         } else {
             $data = json_decode($data, true);
         }
@@ -43,7 +43,7 @@ function modealdata($cachekey, $reset = false) {
     } else {//重置缓存
         $dataclass = '\\Model\\Data\\' . ucfirst($cachekey);
         $data = $dataclass::getInstance()->getdata();
-        return \Sock\Context::cache('set', $cachekey, output_json($data));
+        return \Sockphp\Context::cache('set', $cachekey, output_json($data));
     }
 }
 
@@ -64,7 +64,7 @@ function checktplrefresh($maintpl, $subtpl, $cachetime, $cachefile, $file) {
     if ($tpltime < intval($cachetime)) {
         return;
     }
-    \Sock\Template::getInstance()->parse(getini('data/_view'), $tpldir, $maintpl, $cachefile, $file);
+    \Sockphp\Template::getInstance()->parse(getini('data/_view'), $tpldir, $maintpl, $cachefile, $file);
 }
 
 /**
@@ -122,5 +122,5 @@ function dblog($data, $code = 0) {
         'logcode' => $code,
         'logmsg' => var_export($data, true)
     ];
-    \Sock\Db::dbm('general')->create('weixin_log', $post);
+    \Sockphp\Db::dbm('general')->create('weixin_log', $post);
 }

@@ -1,8 +1,8 @@
 <?php
 
-namespace Sock;
+namespace Sockphp;
 
-use Sock\Exception;
+use Sockphp\Exception;
 
 class Application {
 
@@ -55,24 +55,22 @@ class Application {
     }
 
     /**
-     * @param $path
-     * @param $framedata
+     * @param $server
      * @param $frame
-     * @return array
      */
-    public function request($frame) {
-        $framedata = json_decode($frame->data, true);
-        $data = $this->dispatching($framedata['todo'], $framedata, $frame);
+    public function request($server, $frame) {
+        $this->dispatching($server, $frame);
         $this->finish();
-        return $data;
     }
 
     /**
-     * @param $request
-     * @param $response
+     * @param $server
+     * @param $frame
+     * @return mixed
      */
-    public function dispatching($path, $framedata, $frame) {
-        $router = Route::parse_routes($path);
+    public function dispatching($server, $frame) {
+        $framedata = json_decode($frame->data, true);
+        $router = Route::parse_routes($framedata['todo']);
 
         $_controllerName = array_shift($router);
         $_actionName = array_shift($router);
@@ -82,47 +80,49 @@ class Application {
         if (defined('AUTH') && AUTH) {
             $allow = Rbac::check($controllerName, $actionName, AUTH);
             if (!$allow) {
-                return ['fd' => $frame->fd, "ret" => ['msg' => "你没有权限访问 "]];
+                $res = ['errcode' => 1, 'errormsg' => '你没有权限访问'];
+                $server->push($frame->fd, output_json($res));
             }
         }
-        return $this->execute($controllerName, $actionName, $framedata, $frame);
+        $this->execute($controllerName, $actionName, $server, $frame);
     }
 
     /**
      * @param $controllerName
      * @param $actionName
-     * @param $framedata
+     * @param $server
      * @param $frame
      */
-    private function execute($controllerName, $actionName, $framedata, $frame) {
+    private function execute($controllerName, $actionName, $server, $frame) {
         $controllerName = ucfirst($controllerName);
         $actionMethod = self::_actionPrefix . $actionName;
 
         $controllerClass = self::_controllerPrefix . APPKEY . '\\' . $controllerName;
         try {
-            $controller = new $controllerClass($framedata, $frame);
-            return call_user_func([$controller, $actionMethod]);
+            $controller = new $controllerClass($server, $frame);
+            call_user_func([$controller, $actionMethod]);
         } catch (Exception\Exception $exception) { //普通异常
-            return $this->exception($exception, $frame);
+            $this->exception($exception, $server, $frame);
         } catch (Exception\DbException $exception) { //db异常
-            return $this->exception($exception, $frame);
+            $this->exception($exception, $server, $frame);
         } catch (Exception\CacheException $exception) { //cache异常
-            return $this->exception($exception, $frame);
+            $this->exception($exception, $server, $frame);
         } catch (\ErrorException $exception) {
-            return $this->exception($exception, $frame);
+            $this->exception($exception, $server, $frame);
         } catch (\Throwable $exception) { //PHP7
-            return $this->exception($exception, $frame);
+            $this->exception($exception, $server, $frame);
         }
     }
 
     /**
      * @param $exception
+     * @param $server
      * @param $response
      */
-    private function exception($exception, $frame) {
-        $data = $this->exception2str($exception);
-        $res = ['errcode' => 1, 'errmsg' => $data];
-        return ['fd' => $frame->fd, 'ret' => $res];
+    private function exception($exception, $server, $frame) {
+        $exp = $this->exception2str($exception);
+        $res = ['errcode' => 1, 'errmsg' => $exp];
+        $server->push($frame->fd, output_json($res));
     }
 
     /**
@@ -147,7 +147,7 @@ class Application {
         $path = rtrim($path, '/');
         $loader = function ($classname) use ($namespace, $path) {
             if ($namespace && stripos($classname, $namespace) !== 0) {
-                return false;
+                return;
             }
             $file = trim(substr($classname, strlen($namespace)), '\\');
             $file = $path . '/' . str_replace('\\', '/', $file) . '.php';
@@ -155,7 +155,6 @@ class Application {
                 throw new Exception\Exception($file . '不存在');
             }
             require $file;
-            return true;
         };
         spl_autoload_register($loader);
     }

@@ -1,12 +1,12 @@
 <?php
 
-namespace Sock\Cache;
+namespace Sockphp\Cache;
 
-use \Sock\Exception;
+use \Sockphp\Exception;
 
 class Xcache {
 
-    use \Sock\Traits\Singleton;
+    use \Sockphp\Traits\Singleton;
 
     public $enable = false;
 

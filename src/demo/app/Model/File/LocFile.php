@@ -6,11 +6,11 @@ namespace Model\File;
 
 class LocFile {
 
-    use \Sock\Traits\Singleton;
+    use \Sockphp\Traits\Singleton;
 
     public function check($_files, $fileField, $isOne = true, $filesite = false, $prefix = null) {
         //文件检测
-        $uploader = \Sock\Helper\Uploader::getInstance()->init($_files);
+        $uploader = \Sockphp\Helper\Uploader::getInstance()->init($_files);
         $imageExt = getini('settings/imgext'); //允许的图片格式
         $imageMax = getini('setttings/imgmax'); //图片大小限制
         $fileExt = getini('settings/fileext'); //允许的文件格式
@@ -123,7 +123,7 @@ class LocFile {
         $filesite = $objfile['filesite'];
         $file = $objfile['file'];
 
-        $fileopt = \Sock\Helper\File::getInstance();
+        $fileopt = \Sockphp\Helper\File::getInstance();
 
         if ($prefix) {
             $_fileDir = getini("file/{$filesite}/dir") . $path . '/' . $prefix;
@@ -190,7 +190,7 @@ class LocFile {
         $filesite = $objfile['filesite'];
         $file = $objfile['file'];
 
-        $fileopt = \Sock\Helper\File::getInstance();
+        $fileopt = \Sockphp\Helper\File::getInstance();
 
         if ($prefix) {
             $_fileDir = getini("file/{$filesite}/dir") . $path . '/' . $prefix . '/';
@@ -227,7 +227,7 @@ class LocFile {
         } else {
             $filepath = $path . '/' . $_newname;
         }
-        $imagehelper = '\\Sock\\Helper\\' . ucfirst($mode['imghandle']);
+        $imagehelper = '\\Sockphp\\Helper\\' . ucfirst($mode['imghandle']);
         if (!empty($whg) && is_array($whg)) {
             $WHgroup = $whg;
         } else {
@@ -267,7 +267,7 @@ class LocFile {
             $newfile = $_fileDir . $_newname . '.' . $bigwidth . '.jpg';
             if (is_file($newfile)) {
                 $markfile = $_fileDir . 'water.png';
-                \Sock\Helper\WaterMark::getInstance()->mark($newfile, 9, $markfile, '水印');
+                \Sockphp\Helper\WaterMark::getInstance()->mark($newfile, 9, $markfile, '水印');
             }
         }
         if ('unlink' == $mode['after']) {

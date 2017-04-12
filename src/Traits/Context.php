@@ -1,16 +1,16 @@
 <?php
 
-namespace Sock\Traits;
+namespace Sockphp\Traits;
 
-use \Sock\Exception;
+use \Sockphp\Exception;
 /**
  * @example
  *
  * class Foobar {
- *     use \Sock\Traits\Context;
+ *     use \Sockphp\Traits\Context;
  *
  *     public function __construct() {
- *         $this->setContextHandler(\Sock\Context::factory('redis', $config));
+ *         $this->setContextHandler(\Sockphp\Context::factory('redis', $config));
  *     }
  * }
  *

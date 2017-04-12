@@ -1,6 +1,6 @@
 <?php
 
-namespace Sock\Helper;
+namespace Sockphp\Helper;
 
 /*
  * $ext = pathinfo($_FILES['postfile']['name'], PATHINFO_EXTENSION);

@@ -30,6 +30,6 @@ $_CFG['auth']['key'] = 'webpcsdscq7sEOd35N3ad'; // cookie加密关键字
 $_CFG['app']['loc']['id'] = '111';
 $_CFG['app']['loc']['secret'] = '222';
 
-\Sock\Context::mergeVars('cfg', $_CFG); //加入初始化
+\Sockphp\Context::mergeVars('cfg', $_CFG); //加入初始化
 
 $_CFG = null;

@@ -5,26 +5,26 @@ namespace Model\User;
 //用户model
 class Member {
 
-    use \Sock\Traits\Singleton;
+    use \Sockphp\Traits\Singleton;
 
     public function get_by_id($uid) {
-        return \Sock\Db::findOne('member', '*', ['uid' => $uid]);
+        return \Sockphp\Db::findOne('member', '*', ['uid' => $uid]);
     }
 
     public function get_by_name($username) {
-        return \Sock\Db::findOne('member', '*', ['username' => $username]);
+        return \Sockphp\Db::findOne('member', '*', ['username' => $username]);
     }
 
     public function get_by_email($email) {
-        return \Sock\Db::findOne('member', '*', ['email' => $email]);
+        return \Sockphp\Db::findOne('member', '*', ['email' => $email]);
     }
 
     public function get_profile($uid) {
-        return \Sock\Db::findOne('member_profile', '*', ['uid' => $uid]);
+        return \Sockphp\Db::findOne('member_profile', '*', ['uid' => $uid]);
     }
 
     public function get_status($uid) {
-        return \Sock\Db::findOne('member_stats', '*', ['uid' => $uid]);
+        return \Sockphp\Db::findOne('member_stats', '*', ['uid' => $uid]);
     }
 
     public function check_name_format($username) {
@@ -37,7 +37,7 @@ class Member {
     }
 
     public function check_name_exist($username) {
-        return \Sock\Db::count('member', "username = '{$username}'");
+        return \Sockphp\Db::count('member', "username = '{$username}'");
     }
 
     public function check_email_format($email) {
@@ -46,7 +46,7 @@ class Member {
 
     public function check_email_exist($email, $username = '') {
         $sqladd = ('' !== $username) ? "AND username <> '$username'" : '';
-        return \Sock\Db::count('member', "email = '{$email}' {$sqladd}");
+        return \Sockphp\Db::count('member', "email = '{$email}' {$sqladd}");
     }
 
     public function check_email_access($email) {
@@ -81,7 +81,7 @@ class Member {
     }
 
     public function record_login($uid) {
-        \Sock\Db::update('member_stats', "lastip ='" . clientip() . "',lastactivity = '" . time() . "',loginnum = loginnum +1", "uid = {$uid}");
+        \Sockphp\Db::update('member_stats', "lastip ='" . clientip() . "',lastactivity = '" . time() . "',loginnum = loginnum +1", "uid = {$uid}");
     }
 
     public function add_user($post, $profile = []) {
@@ -91,15 +91,15 @@ class Member {
         if ($post['password']) {
             $post['password'] = topassword($post['password'], $post['salt']);
         }
-        $uid = \Sock\Db::create('member', $post, true);
+        $uid = \Sockphp\Db::create('member', $post, true);
         if ($uid) {
             $profile['uid'] = $uid;
-            \Sock\Db::create('member_profile', $profile);
+            \Sockphp\Db::create('member_profile', $profile);
             $post = [
                 'uid' => $uid,
                 'regip' => clientip()
             ];
-            \Sock\Db::create('member_stats', $post);
+            \Sockphp\Db::create('member_stats', $post);
         }
         return $uid;
     }
@@ -125,16 +125,16 @@ class Member {
             $secques = $questionid > 0 ? $this->quescrypt($questionid, $answer) : '';
             $post['secques'] = $secques;
         }
-        !empty($profile) && \Sock\Db::update('member_profile', $profile, ['uid' => $uid]);
-        $ret = \Sock\Db::update('member', $post, ['uid' => $uid]);
+        !empty($profile) && \Sockphp\Db::update('member_profile', $profile, ['uid' => $uid]);
+        $ret = \Sockphp\Db::update('member', $post, ['uid' => $uid]);
         return $ret ? 1 : 0;
     }
 
     public function del_user($uid) {
-        $ret = \Sock\Db::remove('member', "uid={$uid}");
+        $ret = \Sockphp\Db::remove('member', "uid={$uid}");
         if ($ret) {
-            \Sock\Db::remove('member_profile', "uid={$uid}");
-            \Sock\Db::remove('member_stats', "uid={$uid}");
+            \Sockphp\Db::remove('member_profile', "uid={$uid}");
+            \Sockphp\Db::remove('member_stats', "uid={$uid}");
         }
         return $ret;
     }
@@ -144,6 +144,6 @@ class Member {
     }
 
     public function groups() {
-        return \Sock\Db::findAll('member_group', '*', '1 ORDER BY scores ASC');
+        return \Sockphp\Db::findAll('member_group', '*', '1 ORDER BY scores ASC');
     }
 }

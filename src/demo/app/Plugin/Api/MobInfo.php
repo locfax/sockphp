@@ -4,7 +4,7 @@ namespace Plugin\Api;
 
 class MobInfo {
 
-    use \Sock\Traits\Singleton;
+    use \Sockphp\Traits\Singleton;
 
     function get($phone) {
         $curl = curl_init();

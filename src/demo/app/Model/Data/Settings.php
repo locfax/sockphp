@@ -4,10 +4,10 @@ namespace Model\Cache;
 
 class Settings {
 
-    use \Sock\Traits\Singleton;
+    use \Sockphp\Traits\Singleton;
 
     public function getdata() {
-        $_return = \Sock\Db::dbm('general')->findAll('common_setting', '`key`,`val`');
+        $_return = \Sockphp\Db::dbm('general')->findAll('common_setting', '`key`,`val`');
         if (empty($_return)) {
             return '';
         }

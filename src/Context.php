@@ -1,6 +1,6 @@
 <?php
 
-namespace Sock;
+namespace Sockphp;
 
 class Context {
 
@@ -70,7 +70,7 @@ class Context {
      */
     public static function cache($cmd, $key = '', $val = '', $ttl = 0) {
         if (in_array($cmd, ['set', 'get', 'rm', 'clear', 'close'])) {
-            $cacher = \Sock\Cacher::getInstance();
+            $cacher = \Sockphp\Cacher::getInstance();
             switch ($cmd) {
                 case 'get':
                     return $cacher->get($key);

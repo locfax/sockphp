@@ -4,7 +4,7 @@ namespace Plugin\Api;
 
 class Baike {
 
-    use \Sock\Traits\Singleton;
+    use \Sockphp\Traits\Singleton;
 
     function get($word, $debug = false) {
         $sourl = 'http://baike.baidu.com/search?word=' . urlencode($word) . '&pn=0&rn=0&enc=utf8';
@@ -19,7 +19,7 @@ class Baike {
             'Referer' => $sourl,
             'User-Agent' => 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:31.0) Gecko/20100101 Firefox/31.0'
         ];
-        $mdcurl = \Sock\Helper\Curl::getInstance();
+        $mdcurl = \Sockphp\Helper\Curl::getInstance();
         $data = $mdcurl->send($sourl, '', $heads, 'gzip', 'UTF-8');
         if ($debug) {
             dump($data['http_info']);

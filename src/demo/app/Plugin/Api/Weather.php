@@ -4,7 +4,7 @@ namespace Plugin\Api;
 
 class Weather {
 
-    use \Sock\Traits\Singleton;
+    use \Sockphp\Traits\Singleton;
 
     function get($city) {
         $ak = getini('settings/lbsak');
@@ -18,7 +18,7 @@ class Weather {
             'Host' => 'api.map.baidu.com',
             'User-Agent' => 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:32.0) Gecko/20100101 Firefox/32.0'
         ];
-        $res = \Sock\Helper\Curl::getInstance()->send($url, '', $heads);
+        $res = \Sockphp\Helper\Curl::getInstance()->send($url, '', $heads);
         //dump($res,1);
         $ret = ['status' => 0, 'data' => 'nodata'];
         if (200 == $res['http_code']) {

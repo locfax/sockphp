@@ -1,6 +1,6 @@
 <?php
 
-namespace Sock\Exception;
+namespace Sockphp\Exception;
 
 class Exception extends \Exception {
 
