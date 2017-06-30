@@ -1,6 +1,6 @@
 <?php
 
-namespace Sockphp\Helper;
+namespace Xcs\Helper;
 
 /*
  * $ext = pathinfo($_FILES['postfile']['name'], PATHINFO_EXTENSION);
@@ -14,13 +14,13 @@ class ImageGd {
             $ext = pathinfo($filename, PATHINFO_EXTENSION);
         }
         $fileext = trim(strtolower($ext), '.');
-        $ext2functions = [
+        $ext2functions = array(
             'jpg' => 'imagecreatefromjpeg',
             'jpeg' => 'imagecreatefromjpeg',
             'png' => 'imagecreatefrompng',
             'gif' => 'imagecreatefromgif',
             'bmp' => 'imagecreatefrombmp'
-        ];
+        );
         if (!isset($ext2functions[$fileext])) {
             return false;
         }
