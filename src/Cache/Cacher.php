@@ -1,10 +1,10 @@
 <?php
 
-namespace Sockphp;
+namespace Sockphp\Cache;
 
 class Cacher {
 
-    use Traits\Singleton;
+    use \Sockphp\Traits\Singleton;
 
     private $config = [];
     private $prefix = '';
@@ -19,7 +19,7 @@ class Cacher {
         if (in_array($cacher, array('file', 'memcache', 'redis', 'xcache'))) {
             $class = '\\Sockphp\\Cache\\' . ucfirst($cacher);
             if ($cacher != 'file') {
-                $config = Context::dsn($cacher . '.cache');
+                $config = \Sockphp\Context::dsn($cacher . '.cache');
             } else {
                 $config = null;
             }

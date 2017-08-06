@@ -1,6 +1,6 @@
 <?php
 
-namespace Xcs\Helper;
+namespace Sockphp\Helper;
 
 class Html {
 

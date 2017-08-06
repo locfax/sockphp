@@ -1,10 +1,10 @@
 <?php
 
-namespace Xcs\Helper;
+namespace Sockphp\Helper;
 
-use Xcs\Traits\Singleton;
+class Uploader {
 
-class Uploader extends Singleton {
+    use \Sockphp\Traits\Singleton;
 
     private $_files = array();
     private $_count = 0;

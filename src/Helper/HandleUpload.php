@@ -1,6 +1,6 @@
 <?php
 
-namespace Xcs\Helper;
+namespace Sockphp\Helper;
 
 class HandleUpload {
 
@@ -139,11 +139,11 @@ class HandleUpload {
         }
 
         if ($allowExts) {
-            if (strexists($allowExts, ',')) {
+            if (\Sockphp\Util::strpos($allowExts, ',')) {
                 $exts = explode(',', $allowExts);
-            } elseif (strexists($allowExts, '/')) {
+            } elseif (\Sockphp\Util::strpos($allowExts, '/')) {
                 $exts = explode('/', $allowExts);
-            } elseif (strexists($allowExts, '|')) {
+            } elseif (\Sockphp\Util::strpos($allowExts, '|')) {
                 $exts = explode('|', $allowExts);
             } else {
                 $exts = array($allowExts);
