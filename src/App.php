@@ -6,8 +6,8 @@ use Sockphp\Exception;
 
 class App {
 
-    const _dCTL = 'ctl';
-    const _dACT = 'act';
+    const _dCTL = 'c';
+    const _dACT = 'a';
     const _controllerPrefix = '\\';
     const _actionPrefix = 'act_';
 
