@@ -81,7 +81,7 @@ class App {
             $allow = Rbac::check($controllerName, $actionName, AUTH);
             if (!$allow) {
                 $res = ['errcode' => 1, 'errormsg' => '你没有权限访问'];
-                $server->push($frame->fd, output_json($res));
+                $server->push($frame->fd, \Sockphp\Util::output_json($res));
             }
         }
         $this->execute($controllerName, $actionName, $server, $frame);
@@ -122,7 +122,7 @@ class App {
     private function exception($exception, $server, $frame) {
         $exp = $this->exception2str($exception);
         $res = ['errcode' => 1, 'errmsg' => $exp];
-        $server->push($frame->fd, output_json($res));
+        $server->push($frame->fd, \Sockphp\Util::output_json($res));
     }
 
     /**
@@ -144,14 +144,14 @@ class App {
      * @return mixed
      */
     public static function mergeVars($group, $vars = null) {
-        static $_CDATA = array(APPKEY => array('dsn' => null, 'cfg' => null, 'data' => null));
+        static $_CDATA = array('dsn' => null, 'cfg' => null, 'data' => null);
         if (is_null($vars)) {
-            return $_CDATA[APPKEY][$group];
+            return $_CDATA[$group];
         }
-        if (is_null($_CDATA[APPKEY][$group])) {
-            $_CDATA[APPKEY][$group] = $vars;
+        if (is_null($_CDATA[$group])) {
+            $_CDATA[$group] = $vars;
         } else {
-            $_CDATA[APPKEY][$group] = array_merge($_CDATA[APPKEY][$group], $vars);
+            $_CDATA[$group] = array_merge($_CDATA[$group], $vars);
         }
         return true;
     }
