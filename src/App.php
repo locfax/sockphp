@@ -28,7 +28,7 @@ class App {
 
     private function finish() {
         try {
-            Db::close();
+            DB::close();
         } catch (\ErrorException $e) {
 
         }
@@ -70,13 +70,21 @@ class App {
      */
     public function dispatching($server, $frame) {
         $framedata = json_decode($frame->data, true);
-        $router = Route::parse_routes($framedata['todo']);
+        if (!is_array($framedata) || !isset($framedata['type'])) {
+            $server->push($frame->fd, 'err:' . $frame->data);
+            return;
+        }
+        $router = Route::parse_routes($framedata['type']);
 
-        $_controllerName = array_shift($router);
-        $_actionName = array_shift($router);
-
-        $controllerName = preg_replace('/[^a-z0-9_]+/i', '', $_controllerName);
-        $actionName = preg_replace('/[^a-z0-9_]+/i', '', $_actionName);
+        if (is_array($router)) {
+            $_controllerName = array_shift($router);
+            $_actionName = array_shift($router);
+            $controllerName = preg_replace('/[^a-z0-9_]+/i', '', $_controllerName);
+            $actionName = preg_replace('/[^a-z0-9_]+/i', '', $_actionName);
+        } else {
+            $controllerName = getini('site/defaultController');
+            $actionName = getini('site/defaultAction');
+        }
         if (defined('AUTH') && AUTH) {
             $allow = Rbac::check($controllerName, $actionName, AUTH);
             if (!$allow) {
@@ -101,13 +109,9 @@ class App {
         try {
             $controller = new $controllerClass($server, $frame);
             call_user_func([$controller, $actionMethod]);
-        } catch (Exception\Exception $exception) { //普通异常
-            $this->exception($exception, $server, $frame);
-        } catch (Exception\DbException $exception) { //db异常
-            $this->exception($exception, $server, $frame);
-        } catch (Exception\CacheException $exception) { //cache异常
-            $this->exception($exception, $server, $frame);
         } catch (\ErrorException $exception) {
+            $this->exception($exception, $server, $frame);
+        } catch (\Exception $exception) { //db异常
             $this->exception($exception, $server, $frame);
         } catch (\Throwable $exception) { //PHP7
             $this->exception($exception, $server, $frame);
@@ -123,6 +127,7 @@ class App {
         $exp = $this->exception2str($exception);
         $res = ['errcode' => 1, 'errmsg' => $exp];
         $server->push($frame->fd, \Sockphp\Util::output_json($res));
+        DB::close();
     }
 
     /**

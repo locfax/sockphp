@@ -169,6 +169,7 @@ class Pdo {
         if (empty($data)) {
             return false;
         }
+        $sql = '';
         try {
             if (is_array($condition)) {
                 if (!is_array($data)) {
@@ -177,7 +178,8 @@ class Pdo {
                 list($data, $argsf) = $this->field_param($data, ',');
                 list($condition, $argsw) = $this->field_param($condition, ' AND ');
                 $args = array_merge($argsf, $argsw);
-                $sth = $this->_link->prepare("UPDATE {$tableName} SET {$data} WHERE {$condition}");
+                $sql = "UPDATE {$tableName} SET {$data} WHERE {$condition}";
+                $sth = $this->_link->prepare($sql);
                 $sth->execute($args);
                 if ($retnum) {
                     return $sth->rowCount();
