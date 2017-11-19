@@ -2,8 +2,6 @@
 
 namespace Sockphp;
 
-use Sockphp\Exception;
-
 class App {
 
     const _dCTL = 'c';
@@ -18,10 +16,7 @@ class App {
      */
     public function steup($root) {
         set_error_handler(function ($errno, $error, $file = null, $line = null) {
-            if (error_reporting() & $errno) {
-                throw new \ErrorException($error, $errno, $errno, $file, $line);
-            }
-            return true;
+            throw new \ErrorException($error, $errno);
         });
         $this->rootnamespace('\\', $root);
     }
