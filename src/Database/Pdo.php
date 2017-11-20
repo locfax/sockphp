@@ -5,7 +5,7 @@ namespace Sockphp\Database;
 class Pdo {
 
     private $_config = null;
-    private $_link = null;
+    public $_link = null;
 
     public function __destruct() {
         $this->close();

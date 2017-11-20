@@ -17,10 +17,17 @@ class DB {
         $dsnkey = $_dsn['dsnkey']; //连接池key
         if (isset(self::$used_dbo[$dsnkey])) {
             $dbo = self::$used_dbo[$dsnkey];
-            $dbo->connect($_dsn);
+            if(is_null($dbo->_link)) {
+                call_user_func(array($dbo, 'connect'), $_dsn);
+            }
         } else {
-            $classname = '\\Sockphp\\Database\\' . ucfirst($_dsn['driver']);
-            $dbo = new $classname;
+            if ('mongo' == $_dsn['driver']) {
+                $dbo = new Database\Mongo();
+            } elseif ('mysql' == $_dsn['driver']) {
+                $dbo = new Database\Pdo();
+            } else {
+                $dbo = new Database\Pdo(); //默认为Pdo
+            }
             call_user_func(array($dbo, 'connect'), $_dsn);
             self::$used_dbo[$dsnkey] = $dbo;
         }
@@ -36,10 +43,12 @@ class DB {
         $dsnkey = $_dsn['dsnkey']; //连接池key
         if (isset(self::$used_dbo[$dsnkey])) {
             $dbo = self::$used_dbo[$dsnkey];
-            $dbo->connect($_dsn);
+            if(is_null($dbo->_link)) {
+                call_user_func(array($dbo, 'connect'), $_dsn);
+            }
         } else {
             $dbo = new \Sockphp\Database\Pdo();
-            $dbo->connect($_dsn);
+            call_user_func(array($dbo, 'connect'), $_dsn);
             self::$used_dbo[$dsnkey] = $dbo;
         }
         return $dbo;
