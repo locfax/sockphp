@@ -30,14 +30,4 @@ class Controller {
         return json_encode($res);
     }
 
-    /**
-     * @param $controllerName
-     * @param $actionName
-     * @param bool $auth
-     * @return bool
-     */
-    public function checkacl($controllerName, $actionName, $auth = AUTH) {
-        return Rbac::check($controllerName, $actionName, $auth);
-    }
-
 }
