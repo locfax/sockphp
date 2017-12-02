@@ -18,14 +18,6 @@ class App {
         $this->rootnamespace('\\', $root);
     }
 
-    private function finish() {
-        try {
-            DB::close();
-        } catch (\ErrorException $e) {
-
-        }
-    }
-
     /**
      * @param $key
      * @param $handle
@@ -46,6 +38,10 @@ class App {
         return call_user_func($this->handlers[$key], $param);
     }
 
+    private function finish() {
+        DB::close();
+    }
+    
     /**
      * @param $server
      * @param $frame
@@ -117,7 +113,7 @@ class App {
         $exp = $this->exception2str($exception);
         $res = ['errcode' => 1, 'errmsg' => $exp];
         $server->push($frame->fd, \Sockphp\Util::output_json($res));
-        DB::close();
+        $this->finish();
     }
 
     /**
