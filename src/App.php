@@ -65,20 +65,11 @@ class App {
         $router = Route::parse_routes($framedata['type']);
 
         if (is_array($router)) {
-            $_controllerName = array_shift($router);
-            $_actionName = array_shift($router);
-            $controllerName = preg_replace('/[^a-z0-9_]+/i', '', $_controllerName);
-            $actionName = preg_replace('/[^a-z0-9_]+/i', '', $_actionName);
+            $controllerName = array_shift($router);
+            $actionName = array_shift($router);
         } else {
             $controllerName = getini('site/defaultController');
             $actionName = getini('site/defaultAction');
-        }
-        if (defined('AUTH') && AUTH) {
-            $allow = Rbac::check($controllerName, $actionName, AUTH);
-            if (!$allow) {
-                $res = ['errcode' => 1, 'errormsg' => '你没有权限访问'];
-                $server->push($frame->fd, \Sockphp\Util::output_json($res));
-            }
         }
         $this->execute($controllerName, $actionName, $server, $frame);
     }
@@ -90,12 +81,19 @@ class App {
      * @param $frame
      */
     private function execute($controllerName, $actionName, $server, $frame) {
+        static $controller_pool = array();
         $controllerName = ucfirst($controllerName);
         $actionMethod = self::_actionPrefix . $actionName;
 
         $controllerClass = self::_controllerPrefix . APPKEY . '\\' . $controllerName;
         try {
-            $controller = new $controllerClass($server, $frame);
+            if (isset($controller_pool[$controllerClass])) {
+                $controller = $controller_pool[$controllerClass];
+            } else {
+                $controller = new $controllerClass();
+                $controller_pool[$controllerClass] = $controller;
+            }
+            $controller->init($server, $frame);
             call_user_func([$controller, $actionMethod]);
         } catch (\Exception $exception) { //db异常
             $this->exception($exception, $server, $frame);

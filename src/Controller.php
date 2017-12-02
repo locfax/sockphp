@@ -4,18 +4,13 @@ namespace Sockphp;
 
 class Controller {
 
-    //用户信息
-    protected $login_user = null;
-    //当前控制器
     protected $server = null;
-    //当前动作
     protected $frame = null;
 
-    public function __construct($server, $frame) {
+    public function init($server, $frame) {
         $this->server = $server;
         $this->frame = $frame;
     }
-
 
     /**
      * @param $name
