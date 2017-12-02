@@ -2,8 +2,6 @@
 
 namespace Sockphp\Cache;
 
-use \Sockphp\Exception\Exception;
-
 class File {
 
     use \Sockphp\Traits\Singleton;
@@ -12,11 +10,11 @@ class File {
 
     /**
      * @return $this
-     * @throws Exception
+     * @throws \Exception
      */
     public function init() {
         if (!is_dir(getini('data/_cache'))) {
-            throw new Exception('路径:' . getini('data/_cache') . ' 不可写');
+            throw new \Exception('路径:' . getini('data/_cache') . ' 不可写');
         }
         $this->enable = true;
         return $this;
@@ -34,7 +32,7 @@ class File {
         $cachefile = getini('data/_cache') . $key . '.php';
         if (is_file($cachefile)) {
             $data = include $cachefile;
-            if ($data && $data['timeout'] > time()) {
+            if ($data && ($data['timeout'] == 0 || $data['timeout'] > time())) {
                 return $data['data'];
             }
             unlink($cachefile);
@@ -52,8 +50,8 @@ class File {
         if ($ttl > 0) {
             $timeout = time() + $ttl;
         } else {
-            //默认存储一个月
-            $timeout = time() + 30 * 24 * 3600;
+            //默认存储永久
+            $timeout = 0;
         }
 
         $cachefile = getini('data/_cache') . $key . '.php';

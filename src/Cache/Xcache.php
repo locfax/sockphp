@@ -2,8 +2,6 @@
 
 namespace Sockphp\Cache;
 
-use \Sockphp\Exception\Exception;
-
 class Xcache {
 
     use \Sockphp\Traits\Singleton;
@@ -12,7 +10,7 @@ class Xcache {
 
     public function init() {
         if (!function_exists('xcache_get')) {
-            throw new Exception('xcache 扩展没安装?');
+            throw new \Exception('xcache 扩展没安装?');
         }
         $this->enable = true;
         return $this;

@@ -59,7 +59,7 @@ class App {
     public function dispatching($frame) {
         $data = json_decode($frame->data, true);
         if (!is_array($data) || !isset($data['type'])) {
-            return 'Err: ' . $frame->data;
+            return array('fd' => $frame->fd, 'data' => 'Err: ' . $frame->data);
         }
         $router = Route::parse_routes($data['type']);
 
@@ -94,10 +94,12 @@ class App {
             }
             $controller->init($frame);
             return call_user_func([$controller, $actionMethod]);
+        } catch (Exception\DbException $exception) {
+            return array('fd' => $frame->fd, $this->Exception2str($exception));
         } catch (\Exception $exception) { //db异常
-            return $this->Exception2str($exception);
+            return array('fd' => $frame->fd, $this->Exception2str($exception));
         } catch (\Throwable $exception) { //PHP7
-            return $this->Exception2str($exception);
+            return array('fd' => $frame->fd, $this->Exception2str($exception));
         }
     }
 
