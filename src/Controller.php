@@ -7,8 +7,7 @@ class Controller {
     protected $server = null;
     protected $frame = null;
 
-    public function init($server, $frame) {
-        $this->server = $server;
+    public function init($frame) {
         $this->frame = $frame;
     }
 

@@ -41,28 +41,27 @@ class App {
     private function finish() {
         DB::close();
     }
-    
-    /**
-     * @param $server
-     * @param $frame
-     */
-    public function request($server, $frame) {
-        $this->dispatching($server, $frame);
-        $this->finish();
-    }
 
     /**
-     * @param $server
      * @param $frame
      * @return mixed
      */
-    public function dispatching($server, $frame) {
-        $framedata = json_decode($frame->data, true);
-        if (!is_array($framedata) || !isset($framedata['type'])) {
-            $server->push($frame->fd, 'err:' . $frame->data);
-            return;
+    public function request($frame) {
+        $res = $this->dispatching($frame);
+        $this->finish();
+        return $res;
+    }
+
+    /**
+     * @param $frame
+     * @return mixed
+     */
+    public function dispatching($frame) {
+        $data = json_decode($frame->data, true);
+        if (!is_array($data) || !isset($data['type'])) {
+            return 'Err: ' . $frame->data;
         }
-        $router = Route::parse_routes($framedata['type']);
+        $router = Route::parse_routes($data['type']);
 
         if (is_array($router)) {
             $controllerName = array_shift($router);
@@ -71,16 +70,16 @@ class App {
             $controllerName = getini('site/defaultController');
             $actionName = getini('site/defaultAction');
         }
-        $this->execute($controllerName, $actionName, $server, $frame);
+        return $this->execute($controllerName, $actionName, $frame);
     }
 
     /**
      * @param $controllerName
      * @param $actionName
-     * @param $server
      * @param $frame
+     * @return mixed
      */
-    private function execute($controllerName, $actionName, $server, $frame) {
+    private function execute($controllerName, $actionName, $frame) {
         static $controller_pool = array();
         $controllerName = ucfirst($controllerName);
         $actionMethod = self::_actionPrefix . $actionName;
@@ -93,36 +92,24 @@ class App {
                 $controller = new $controllerClass();
                 $controller_pool[$controllerClass] = $controller;
             }
-            $controller->init($server, $frame);
-            call_user_func([$controller, $actionMethod]);
+            $controller->init($frame);
+            return call_user_func([$controller, $actionMethod]);
         } catch (\Exception $exception) { //db异常
-            $this->exception($exception, $server, $frame);
+            return $this->Exception2str($exception);
         } catch (\Throwable $exception) { //PHP7
-            $this->exception($exception, $server, $frame);
+            return $this->Exception2str($exception);
         }
-    }
-
-    /**
-     * @param $exception
-     * @param $server
-     * @param $response
-     */
-    private function exception($exception, $server, $frame) {
-        $exp = $this->exception2str($exception);
-        $res = ['errcode' => 1, 'errmsg' => $exp];
-        $server->push($frame->fd, \Sockphp\Util::output_json($res));
-        $this->finish();
     }
 
     /**
      * @param mixed $exception
      * @return string
      */
-    private function exception2str($exception) {
+    private function Exception2str($exception) {
         $output = '<h3>' . $exception->getMessage() . '</h3>';
         $output .= '<p>' . nl2br($exception->getTraceAsString()) . '</p>';
         if ($previous = $exception->getPrevious()) {
-            $output = $this->exception2str($previous) . $output;
+            $output = $this->Exception2str($previous) . $output;
         }
         return $output;
     }
