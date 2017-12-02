@@ -95,11 +95,11 @@ class App {
             $controller->init($frame);
             return call_user_func([$controller, $actionMethod]);
         } catch (Exception\DbException $exception) {
-            return array('fd' => $frame->fd, $this->Exception2str($exception));
+            return array('fd' => $frame->fd, 'data' => $this->Exception2str($exception));
         } catch (\Exception $exception) { //db异常
-            return array('fd' => $frame->fd, $this->Exception2str($exception));
+            return array('fd' => $frame->fd, 'data' => $this->Exception2str($exception));
         } catch (\Throwable $exception) { //PHP7
-            return array('fd' => $frame->fd, $this->Exception2str($exception));
+            return array('fd' => $frame->fd, 'data' => $this->Exception2str($exception));
         }
     }
 
