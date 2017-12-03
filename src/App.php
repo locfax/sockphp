@@ -61,7 +61,7 @@ class App {
         if (!is_array($data) || !isset($data['type'])) {
             return array('fd' => $frame->fd, 'data' => 'Err: ' . $frame->data);
         }
-        $router = Route::parse_routes($data['type']);
+        $router = $this->parse_routes($data['type']);
 
         if (is_array($router)) {
             $controllerName = array_shift($router);
@@ -101,6 +101,36 @@ class App {
         } catch (\Throwable $exception) { //PHP7
             return array('fd' => $frame->fd, 'data' => $this->Exception2str($exception));
         }
+    }
+
+    private function parse_routes($uri) {
+        static $routes = null;
+        if (strpos($uri, 'index.php') !== false) {
+            $uri = substr($uri, strpos($uri, 'index.php') + 10);
+        }
+        if (!$uri) {
+            return false;
+        }
+        if (!$routes) {
+            $routes = Context::config(APPKEY, 'route');
+            $_routes = [];
+            foreach ($routes as $key => $val) {
+                $key = str_replace([':any', ':num'], ['[^/]+', '[0-9]+'], $key);
+                $_routes[$key] = $val;
+            }
+            $routes = $_routes;
+            $_routes = null;
+        }
+        foreach ($routes as $key => $val) {
+            if (preg_match('#' . $key . '#', $uri, $matches)) {
+                if (strpos($val, '$') !== FALSE && strpos($key, '(') !== FALSE) {
+                    $val = preg_replace('#' . $key . '#', $val, $uri);
+                }
+                $req = explode('/', $val);
+                return $req;
+            }
+        }
+        return false;
     }
 
     /**
