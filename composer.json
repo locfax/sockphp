@@ -12,11 +12,9 @@
     }
   ],
   "require": {
-    "php": ">=5.5.0",
-    "monolog/monolog": "^1.17"
+    "php": ">=5.5.0"
   },
   "suggest": {
-    "monolog/monolog": "Allows more advanced logging of the application flow"
   },
   "autoload": {
     "psr-4": {"Sockphp\\": "src"},
