@@ -24,6 +24,7 @@ class Pdo {
      * @param $config
      * @param string $type
      * @return bool
+     * @throws \Sockphp\Exception\DbException
      */
     public function connect($config, $type = '') {
         if (is_null($this->_config)) {
@@ -50,6 +51,7 @@ class Pdo {
 
     /**
      * @return bool
+     * @throws \Sockphp\Exception\DbException
      */
     public function reconnect() {
         return $this->connect($this->_config, 'RETRY');
@@ -108,6 +110,7 @@ class Pdo {
      * @param array $data
      * @param bool $retid
      * @return bool
+     * @throws \Sockphp\Exception\DbException
      */
     public function create($tableName, array $data, $retid = false) {
         if (empty($data)) {
@@ -138,6 +141,7 @@ class Pdo {
      * @param $tableName
      * @param array $data
      * @return bool
+     * @throws \Sockphp\Exception\DbException
      */
     public function replace($tableName, array $data) {
         if (empty($data)) {
@@ -166,6 +170,7 @@ class Pdo {
      * @param $condition
      * @param bool $retnum
      * @return bool
+     * @throws \Sockphp\Exception\DbException
      */
     public function update($tableName, $data, $condition, $retnum = false) {
         if (empty($data)) {
@@ -204,6 +209,7 @@ class Pdo {
      * @param $condition
      * @param bool $muti
      * @return bool
+     * @throws \Sockphp\Exception\DbException
      */
     public function remove($tableName, $condition, $muti = true) {
         if (empty($condition)) {
@@ -226,6 +232,7 @@ class Pdo {
      * @param string $field
      * @param $condition
      * @return bool
+     * @throws \Sockphp\Exception\DbException
      */
     public function findOne($tableName, $field, $condition) {
         try {
@@ -250,6 +257,7 @@ class Pdo {
      * @param string $condition
      * @param null $index
      * @return array|bool
+     * @throws \Sockphp\Exception\DbException
      */
     public function findAll($tableName, $field = '*', $condition = '1', $index = null) {
         try {
@@ -279,6 +287,7 @@ class Pdo {
      * @param int $start
      * @param int $length
      * @return bool
+     * @throws \Sockphp\Exception\DbException
      */
     private function _page($tableName, $field, $condition, $start = 0, $length = 20) {
         try {
@@ -306,6 +315,7 @@ class Pdo {
      * @param int $pageparm
      * @param int $length
      * @return array|bool
+     * @throws \Sockphp\Exception\DbException
      */
     public function page($table, $field, $condition, $pageparm = 0, $length = 18) {
         if (is_array($pageparm)) {
@@ -330,6 +340,7 @@ class Pdo {
      * @param string $field
      * @param mixed $condition
      * @return bool
+     * @throws \Sockphp\Exception\DbException
      */
     public function resultFirst($tableName, $field, $condition) {
         try {
@@ -349,6 +360,13 @@ class Pdo {
     }
 
 
+    /**
+     * @param $tableName
+     * @param $field
+     * @param $condition
+     * @return array|bool
+     * @throws \Sockphp\Exception\DbException
+     */
     public function getCol($tableName, $field, $condition) {
         try {
             if (is_array($condition)) {
@@ -375,6 +393,7 @@ class Pdo {
      * @param $sql
      * @param null $args
      * @return bool
+     * @throws \Sockphp\Exception\DbException
      */
     public function exec($sql, $args = null) {
         try {
@@ -395,6 +414,7 @@ class Pdo {
      * @param $sql
      * @param $args
      * @return bool
+     * @throws \Sockphp\Exception\DbException
      */
     public function row($sql, $args = null) {
         try {
@@ -416,6 +436,7 @@ class Pdo {
      * @param $args
      * @param $index
      * @return bool|array
+     * @throws \Sockphp\Exception\DbException
      */
     public function rowset($sql, $args = null, $index = null) {
         try {
@@ -440,6 +461,7 @@ class Pdo {
      * @param string $sql
      * @param array $args
      * @return bool
+     * @throws \Sockphp\Exception\DbException
      */
     private function _pages($sql, $args = null) {
         try {
@@ -462,6 +484,7 @@ class Pdo {
      * @param mixed $pageparm
      * @param int $length
      * @return array|bool
+     * @throws \Sockphp\Exception\DbException
      */
     public function pages($sql, $args = null, $pageparm = 0, $length = 18) {
         if (is_array($pageparm)) {
@@ -486,6 +509,7 @@ class Pdo {
      * @param string $condition
      * @param string $field
      * @return bool
+     * @throws \Sockphp\Exception\DbException
      */
     public function count($tableName, $condition, $field = '*') {
         return $this->resultFirst($tableName, "COUNT({$field})", $condition);
@@ -495,6 +519,7 @@ class Pdo {
      * @param $sql
      * @param null $args
      * @return bool
+     * @throws \Sockphp\Exception\DbException
      */
     public function counts($sql, $args = null) {
         return $this->firsts($sql, $args);
@@ -504,6 +529,7 @@ class Pdo {
      * @param $sql
      * @param null $args
      * @return bool
+     * @throws \Sockphp\Exception\DbException
      */
     public function firsts($sql, $args = null) {
         try {
@@ -519,6 +545,12 @@ class Pdo {
         }
     }
 
+    /**
+     * @param $sql
+     * @param null $args
+     * @return array|bool
+     * @throws \Sockphp\Exception\DbException
+     */
     public function getcols($sql, $args = null) {
         try {
             if (is_null($args)) {

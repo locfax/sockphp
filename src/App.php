@@ -85,20 +85,15 @@ class App {
         $actionMethod = self::_actionPrefix . $actionName;
 
         $controllerClass = self::_controllerPrefix . APPKEY . '\\' . $controllerName;
-        try {
-            if (isset($controller_pool[$controllerClass])) {
-                $controller = $controller_pool[$controllerClass];
-            } else {
-                $controller = new $controllerClass();
-                $controller_pool[$controllerClass] = $controller;
-            }
-            $controller->init($frame);
-            return call_user_func([$controller, $actionMethod]);
-        } catch (\Exception $exception) { //db异常
-            return array('fd' => $frame->fd, 'data' => $this->Exception2str($exception));
-        } catch (\Throwable $exception) { //PHP7
-            return array('fd' => $frame->fd, 'data' => $this->Exception2str($exception));
+
+        if (isset($controller_pool[$controllerClass])) {
+            $controller = $controller_pool[$controllerClass];
+        } else {
+            $controller = new $controllerClass();
+            $controller_pool[$controllerClass] = $controller;
         }
+        $controller->init($frame);
+        return call_user_func([$controller, $actionMethod]);
     }
 
     private function parse_routes($uri) {
@@ -129,19 +124,6 @@ class App {
             }
         }
         return false;
-    }
-
-    /**
-     * @param mixed $exception
-     * @return string
-     */
-    private function Exception2str($exception) {
-        $output = '<h3>' . $exception->getMessage() . '</h3>';
-        $output .= '<p>' . nl2br($exception->getTraceAsString()) . '</p>';
-        if ($previous = $exception->getPrevious()) {
-            $output = $this->Exception2str($previous) . $output;
-        }
-        return $output;
     }
 
     /**
