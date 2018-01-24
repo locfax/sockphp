@@ -23,11 +23,8 @@ class Mongo {
 
     /**
      * @param $config
-     * @param string $type
-     * @return bool
-     * @throws \Sockphp\Exception\DbException
      */
-    public function connect($config, $type = '') {
+    public function connect($config) {
         if (is_null($this->_config)) {
             $this->_config = $config;
         }
@@ -35,26 +32,19 @@ class Mongo {
             $this->_link = new \MongoClient($config['dsn'], array("connect" => false));
             $this->_link->connect();
             $this->_client = $this->_link->selectDB($config['database']);
-            return true;
         } catch (\MongoConnectionException $ex) {
-            if ('RETRY' != $type) {
-                return $this->reconnect();
-            }
-            $this->_client = null;
-            return $this->_halt($ex->getMessage(), $ex->getCode());
+            $this->_halt($ex->getMessage(), $ex->getCode());
         }
     }
 
     public function close() {
         $this->_link && $this->_link->close();
+        $this->_link = null;
+        $this->_client = null;
     }
 
-    /**
-     * @return bool
-     * @throws \Sockphp\Exception\DbException
-     */
     public function reconnect() {
-        return $this->connect($this->_config, 'RETRY');
+        $this->connect($this->_config);
     }
 
     /**
@@ -63,12 +53,8 @@ class Mongo {
      * @param bool $retid
      * @param string $type
      * @return bool|string
-     * @throws \Sockphp\Exception\DbException
      */
     public function create($table, $document = array(), $retid = false, $type = '') {
-        if (!$this->_client) {
-            return $this->_halt('client is not connected!');
-        }
         try {
             if (isset($document['_id'])) {
                 if (!is_object($document['_id'])) {
@@ -84,7 +70,7 @@ class Mongo {
                 return $insert_id;
             }
             return $ret['ok'];
-        } catch (\MongoException $ex) {
+        } catch (\Exception $ex) {
             if ('RETRY' !== $type) {
                 $this->reconnect();
                 return $this->create($table, $document, $retid, 'RETRY');
@@ -98,12 +84,8 @@ class Mongo {
      * @param array $document
      * @param string $type
      * @return bool
-     * @throws \Sockphp\Exception\DbException
      */
     public function replace($table, $document = array(), $type = '') {
-        if (!$this->_client) {
-            return $this->_halt('client is not connected!');
-        }
         try {
             if (isset($document['_id'])) {
                 $document['_id'] = new \MongoId($document['_id']);
@@ -111,7 +93,7 @@ class Mongo {
             $collection = $this->_client->selectCollection($table);
             $ret = $collection->save($document);
             return $ret['ok'];
-        } catch (\MongoException $ex) {
+        } catch (\Exception $ex) {
             if ('RETRY' !== $type) {
                 $this->reconnect();
                 return $this->replace($table, $document, 'RETRY');
@@ -127,12 +109,8 @@ class Mongo {
      * @param string $options
      * @param string $type
      * @return bool
-     * @throws \Sockphp\Exception\DbException
      */
     public function update($table, $document = array(), $condition = array(), $options = 'set', $type = '') {
-        if (!$this->_client) {
-            return $this->_halt('client is not connected!');
-        }
         try {
             if (isset($condition['_id'])) {
                 $condition['_id'] = new \MongoId($condition['_id']);
@@ -159,9 +137,8 @@ class Mongo {
             } elseif ('addToSet' == $options) { //追加到内镶文档
                 $ret = $collection->update($condition, array('$addToSet' => $document));
             }
-            //$pushAll $pullAll
             return $ret;
-        } catch (\MongoException $ex) {
+        } catch (\Exception $ex) {
             if ('RETRY' !== $type) {
                 $this->reconnect();
                 return $this->update($table, $document, $condition, $options, 'RETRY');
@@ -176,12 +153,8 @@ class Mongo {
      * @param bool $muti
      * @param string $type
      * @return bool
-     * @throws \Sockphp\Exception\DbException
      */
     public function remove($table, $condition = array(), $muti = false, $type = '') {
-        if (!$this->_client) {
-            return $this->_halt('client is not connected!');
-        }
         try {
             if (isset($condition['_id'])) {
                 $condition['_id'] = new \MongoId($condition['_id']);
@@ -193,7 +166,7 @@ class Mongo {
                 $ret = $collection->remove($condition, array('justOne' => true));
             }
             return $ret;
-        } catch (\MongoException $ex) {
+        } catch (\Exception $ex) {
             if ('RETRY' !== $type) {
                 $this->reconnect();
                 return $this->remove($table, $condition, $muti, 'RETRY');
@@ -208,12 +181,8 @@ class Mongo {
      * @param array $condition
      * @param string $type
      * @return bool
-     * @throws \Sockphp\Exception\DbException
      */
     public function findOne($table, $fields = array(), $condition = array(), $type = '') {
-        if (!$this->_client) {
-            return $this->_halt('client is not connected!');
-        }
         try {
             if (isset($condition['_id'])) {
                 $condition['_id'] = new \MongoId($condition['_id']);
@@ -224,7 +193,7 @@ class Mongo {
                 $cursor['_id'] = $cursor['nid'] = $cursor['_id']->{'$id'};
             }
             return $cursor;
-        } catch (\MongoException $ex) {
+        } catch (\Exception $ex) {
             if ('RETRY' !== $type) {
                 $this->reconnect();
                 return $this->findOne($table, $fields, $condition, 'RETRY');
@@ -239,12 +208,8 @@ class Mongo {
      * @param array $query
      * @param string $type
      * @return array|bool|\Generator
-     * @throws \Sockphp\Exception\DbException
      */
     public function findAll($table, $fields = array(), $query = array(), $type = '') {
-        if (!$this->_client) {
-            return $this->_halt('client is not connected!');
-        }
         try {
             $collection = $this->_client->selectCollection($table);
             if (isset($query['query'])) {
@@ -262,7 +227,7 @@ class Mongo {
                 $rowsets[] = $row;
             }
             return $rowsets;
-        } catch (\MongoException $ex) {
+        } catch (\Exception $ex) {
             if ('RETRY' !== $type) {
                 $this->reconnect();
                 return $this->findAll($table, $fields, $query, 'RETRY');
@@ -279,12 +244,8 @@ class Mongo {
      * @param int $length
      * @param string $type
      * @return array|bool
-     * @throws \Sockphp\Exception\DbException
      */
     private function _page($table, $fields, $condition, $offset = 0, $length = 18, $type = '') {
-        if (!$this->_client) {
-            return $this->_halt('client is not connected!');
-        }
         try {
             $collection = $this->_client->selectCollection($table);
             if ('fields' == $condition['type']) {
@@ -303,12 +264,12 @@ class Mongo {
             } else {
                 //内镶文档查询
                 if (!$fields) {
-                    throw new \Sockphp\Exception\Exception('fields is empty', 0);
+                    throw new \Sockphp\Exception\DbException('fields is empty', 0);
                 }
                 $cursor = $collection->findOne($condition['query'], array($fields => array('$slice' => array($offset, $length))));
                 return $cursor[$fields];
             }
-        } catch (\MongoException $ex) {
+        } catch (\Exception $ex) {
             if ('RETRY' !== $type) {
                 $this->reconnect();
                 return $this->_page($table, $fields, $condition, $offset, $length, 'RETRY');
@@ -324,7 +285,6 @@ class Mongo {
      * @param int $pageparm
      * @param int $length
      * @return array|bool
-     * @throws \Sockphp\Exception\DbException
      */
     function page($table, $field, $condition, $pageparm = 0, $length = 18) {
         if (is_array($pageparm)) {
@@ -349,19 +309,15 @@ class Mongo {
      * @param array $condition
      * @param string $type
      * @return bool
-     * @throws \Sockphp\Exception\DbException
      */
     public function count($table, $condition = array(), $type = '') {
-        if (!$this->_client) {
-            return $this->_halt('client is not connected!');
-        }
         try {
             $collection = $this->_client->selectCollection($table);
             if (isset($condition['_id'])) {
                 $condition['_id'] = new \MongoId($condition['_id']);
             }
             return $collection->count($condition);
-        } catch (\MongoException $ex) {
+        } catch (\Exception $ex) {
             if ('RETRY' !== $type) {
                 $this->reconnect();
                 return $this->count($table, $condition, 'RETRY');
@@ -374,13 +330,12 @@ class Mongo {
      * @param string $message
      * @param int $code
      * @return bool
-     * @throws \Sockphp\Exception\DbException
      */
     private function _halt($message = '', $code = 0) {
         if ($this->_config['rundev']) {
             $this->close();
             $message = mb_convert_encoding($message, 'utf-8', 'gbk');
-            throw new \Sockphp\Exception\DbException($message, intval($code));
+            echo $message . 'code:' . $code;
         }
         return false;
     }
