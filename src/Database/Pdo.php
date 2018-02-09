@@ -12,51 +12,43 @@ class Pdo {
     }
 
     /**
+     * @param $config
+     */
+    public function __construct($config) {
+        if (is_null($this->_config)) {
+            $this->_config = $config;
+        }
+
+        $opt = array(
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+            \PDO::ATTR_EMULATE_PREPARES => false,
+            \PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8',
+            //\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => true,
+            \PDO::ATTR_PERSISTENT => false
+        );
+        try {
+            $this->_link = new \PDO($config['dsn'], $config['login'], $config['secret'], $opt);
+        } catch (\PDOException $exception) {
+            $this->_halt($exception->getMessage(), $exception->getCode(), 'server is gone');
+        }
+    }
+
+    public function reconnect() {
+        $this->__construct($this->_config);
+    }
+
+    public function close() {
+        $this->_link = null;
+    }
+
+    /**
      * @param $func
      * @param $args
      * @return mixed
      */
     public function __call($func, $args) {
-        return call_user_func_array(array($this->_link, $func), $args);
-    }
-
-    /**
-     * @param $config
-     * @param string $type
-     * @return bool
-     */
-    public function connect($config, $type = '') {
-        if (is_null($this->_config)) {
-            $this->_config = $config;
-        }
-        try {
-            $opt = array(
-                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-                \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
-                \PDO::ATTR_EMULATE_PREPARES => false,
-                \PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8',
-                \PDO::ATTR_PERSISTENT => false
-            );
-            $this->_link = new \PDO($config['dsn'], $config['login'], $config['secret'], $opt);
-            return true;
-        } catch (\PDOException $e) {
-            if ('RETRY' !== $type) {
-                return $this->reconnect();
-            }
-            $this->_link = null;
-            return $this->_halt($e->getMessage(), $e->getCode());
-        }
-    }
-
-    /**
-     * @return bool
-     */
-    public function reconnect() {
-        return $this->connect($this->_config, 'RETRY');
-    }
-
-    public function close() {
-        $this->_link = null;
+        return $this->_link && call_user_func_array(array($this->_link, $func), $args);
     }
 
     /**
@@ -115,9 +107,10 @@ class Pdo {
      * @param $tableName
      * @param array $data
      * @param bool $retid
+     * @param string $type
      * @return bool
      */
-    public function create($tableName, array $data, $retid = false) {
+    public function create($tableName, array $data, $retid = false, $type = '') {
         if (empty($data)) {
             return false;
         }
@@ -132,12 +125,16 @@ class Pdo {
         try {
             $sql = 'INSERT INTO ' . $this->qtable($tableName) . '(' . $fields . ') VALUES (' . $values . ')';
             $sth = $this->_link->prepare($sql);
-            $ret = $sth->execute($args);
-            if ($ret && $retid) {
+            $data = $sth->execute($args);
+            if ($retid) {
                 return $this->_link->lastInsertId();
             }
-            return $ret;
+            return $data;
         } catch (\PDOException $e) {
+            if ('RETRY' != $type) {
+                $this->reconnect();
+                return $this->create($tableName, $data, $retid, 'RETRY');
+            }
             return $this->_halt($e->getMessage(), $e->getCode(), $sql);
         }
     }
@@ -145,9 +142,11 @@ class Pdo {
     /**
      * @param $tableName
      * @param array $data
+     * @param bool $retnum
+     * @param string $type
      * @return bool
      */
-    public function replace($tableName, array $data) {
+    public function replace($tableName, array $data, $retnum = false, $type = '') {
         if (empty($data)) {
             return false;
         }
@@ -162,8 +161,16 @@ class Pdo {
         try {
             $sql = 'REPLACE INTO ' . $this->qtable($tableName) . '(' . $fields . ') VALUES (' . $values . ')';
             $sth = $this->_link->prepare($sql);
-            return $sth->execute($args);
+            $data = $sth->execute($args);
+            if ($retnum) {
+                return $sth->rowCount();
+            }
+            return $data;
         } catch (\PDOException $e) {
+            if ('RETRY' != $type) {
+                $this->reconnect();
+                return $this->replace($tableName, $data, $retnum, 'RETRY');
+            }
             return $this->_halt($e->getMessage(), $e->getCode(), $sql);
         }
     }
@@ -173,13 +180,13 @@ class Pdo {
      * @param array $data
      * @param $condition
      * @param bool $retnum
+     * @param string $type
      * @return bool
      */
-    public function update($tableName, $data, $condition, $retnum = false) {
+    public function update($tableName, $data, $condition, $retnum = false, $type = '') {
         if (empty($data)) {
             return false;
         }
-        $sql = '';
         try {
             if (is_array($condition)) {
                 if (!is_array($data)) {
@@ -190,11 +197,11 @@ class Pdo {
                 $args = array_merge($argsf, $argsw);
                 $sql = 'UPDATE ' . $this->qtable($tableName) . " SET {$data} WHERE {$condition}";
                 $sth = $this->_link->prepare($sql);
-                $sth->execute($args);
+                $data = $sth->execute($args);
                 if ($retnum) {
                     return $sth->rowCount();
                 }
-                return true;
+                return $data;
             } else {
                 if (is_array($data)) {
                     $data = $this->field_value($data, ',');
@@ -203,6 +210,10 @@ class Pdo {
                 return $this->_link->exec($sql);
             }
         } catch (\PDOException $e) {
+            if ('RETRY' != $type) {
+                $this->reconnect();
+                return $this->update($tableName, $data, $condition, $retnum, 'RETRY');
+            }
             return $this->_halt($e->getMessage(), $e->getCode(), $sql);
         }
     }
@@ -211,9 +222,10 @@ class Pdo {
      * @param $tableName
      * @param $condition
      * @param bool $muti
+     * @param string $type
      * @return bool
      */
-    public function remove($tableName, $condition, $muti = true) {
+    public function remove($tableName, $condition, $muti = true, $type = '') {
         if (empty($condition)) {
             return false;
         }
@@ -225,6 +237,10 @@ class Pdo {
             $sql = 'DELETE FROM ' . $this->qtable($tableName) . ' WHERE ' . $condition . $limit;
             return $this->_link->exec($sql);
         } catch (\PDOException $e) {
+            if ('RETRY' != $type) {
+                $this->reconnect();
+                return $this->remove($tableName, $condition, $muti, 'RETRY');
+            }
             return $this->_halt($e->getMessage(), $e->getCode(), $sql);
         }
     }
@@ -233,9 +249,11 @@ class Pdo {
      * @param $tableName
      * @param string $field
      * @param $condition
+     * @param $retobj
+     * @param $type
      * @return bool
      */
-    public function findOne($tableName, $field, $condition) {
+    public function findOne($tableName, $field, $condition, $retobj = false, $type = '') {
         try {
             if (is_array($condition)) {
                 list($condition, $args) = $this->field_param($condition, ' AND ');
@@ -246,8 +264,18 @@ class Pdo {
                 $sql = 'SELECT ' . $field . ' FROM ' . $this->qtable($tableName) . ' WHERE ' . $condition . ' LIMIT 0,1';
                 $sth = $this->_link->query($sql);
             }
-            return $sth->fetch();
+            if ($retobj) {
+                $data = $sth->fetch(\PDO::FETCH_OBJ);
+            } else {
+                $data = $sth->fetch();
+            }
+            $sth->closeCursor();
+            return $data;
         } catch (\PDOException $e) {
+            if ('RETRY' != $type) {
+                $this->reconnect();
+                return $this->findOne($tableName, $field, $condition, $retobj, 'RETRY');
+            }
             return $this->_halt($e->getMessage(), $e->getCode(), $sql);
         }
     }
@@ -257,9 +285,11 @@ class Pdo {
      * @param string $field
      * @param string $condition
      * @param null $index
+     * @param bool $retobj
+     * @param string $type
      * @return array|bool
      */
-    public function findAll($tableName, $field = '*', $condition = '1', $index = null) {
+    public function findAll($tableName, $field = '*', $condition = '1', $index = null, $retobj = false, $type = '') {
         try {
             if (is_array($condition)) {
                 list($condition, $args) = $this->field_param($condition, ' AND ');
@@ -270,12 +300,21 @@ class Pdo {
                 $sql = 'SELECT ' . $field . ' FROM ' . $this->qtable($tableName) . ' WHERE ' . $condition;
                 $sth = $this->_link->query($sql);
             }
-            $data = $sth->fetchAll();
+            if ($retobj) {
+                $data = $sth->fetchAll(\PDO::FETCH_OBJ);
+            } else {
+                $data = $sth->fetchAll();
+            }
+            $sth->closeCursor();
             if (is_null($index)) {
                 return $data;
             }
             return $this->array_index($data, $index);
         } catch (\PDOException $e) {
+            if ('RETRY' != $type) {
+                $this->reconnect();
+                return $this->findAll($tableName, $field, $condition, $index, $retobj, 'RETRY');
+            }
             return $this->_halt($e->getMessage(), $e->getCode(), $sql);
         }
     }
@@ -286,9 +325,11 @@ class Pdo {
      * @param $condition
      * @param int $start
      * @param int $length
-     * @return bool
+     * @param bool $retobj
+     * @param string $type
+     * @return array|bool
      */
-    private function _page($tableName, $field, $condition, $start = 0, $length = 20) {
+    private function _page($tableName, $field, $condition, $start = 0, $length = 20, $retobj = false, $type = '') {
         try {
             if (is_array($condition)) {
                 list($condition, $args) = $this->field_param($condition, ' AND ');
@@ -301,8 +342,18 @@ class Pdo {
                 $sql = 'SELECT ' . $field . ' FROM ' . $this->qtable($tableName) . ' WHERE ' . $condition . " LIMIT {$start},{$length}";
                 $sth = $this->_link->query($sql);
             }
-            return $sth->fetchAll();
+            if ($retobj) {
+                $data = $sth->fetchAll(\PDO::FETCH_OBJ);
+            } else {
+                $data = $sth->fetchAll();
+            }
+            $sth->closeCursor();
+            return $data;
         } catch (\PDOException $e) {
+            if ('RETRY' != $type) {
+                $this->reconnect();
+                return $this->_page($tableName, $field, $condition, $start, $length, $retobj, 'RETRY');
+            }
             return $this->_halt($e->getMessage(), $e->getCode(), $sql);
         }
     }
@@ -313,23 +364,24 @@ class Pdo {
      * @param $condition
      * @param int $pageparm
      * @param int $length
+     * @param bool $retobj
      * @return array|bool
      */
-    public function page($table, $field, $condition, $pageparm = 0, $length = 18) {
+    public function page($table, $field, $condition, $pageparm = 0, $length = 18, $retobj = false) {
         if (is_array($pageparm)) {
             //固定长度分页模式
             $ret = array('rowsets' => array(), 'pagebar' => '');
             if ($pageparm['totals'] <= 0) {
                 return $ret;
             }
-            $start = \Sockphp\DB::page_start($pageparm['curpage'], $length, $pageparm['totals']);
-            $ret['rowsets'] = $this->_page($table, $field, $condition, $start, $length);;
+            $start = $this->page_start($pageparm['curpage'], $length, $pageparm['totals']);
+            $ret['rowsets'] = $this->_page($table, $field, $condition, $start, $length, $retobj);;
             $ret['pagebar'] = \Sockphp\DB::pagebar($pageparm, $length);
             return $ret;
         } else {
             //任意长度模式
             $start = $pageparm;
-            return $this->_page($table, $field, $condition, $start, $length);
+            return $this->_page($table, $field, $condition, $start, $length, $retobj);
         }
     }
 
@@ -337,9 +389,10 @@ class Pdo {
      * @param string $tableName
      * @param string $field
      * @param mixed $condition
+     * @param string $type
      * @return bool
      */
-    public function resultFirst($tableName, $field, $condition) {
+    public function resultFirst($tableName, $field, $condition, $type = '') {
         try {
             if (is_array($condition)) {
                 list($condition, $args) = $this->field_param($condition, ' AND ');
@@ -350,8 +403,14 @@ class Pdo {
                 $sql = "SELECT {$field} AS result FROM " . $this->qtable($tableName) . " WHERE  {$condition} LIMIT 0,1";
                 $sth = $this->_link->query($sql);
             }
-            return $sth->fetchColumn();
+            $data = $sth->fetchColumn();
+            $sth->closeCursor();
+            return $data;
         } catch (\PDOException $e) {
+            if ('RETRY' != $type) {
+                $this->reconnect();
+                return $this->resultFirst($tableName, $field, $condition, 'RETRY');
+            }
             return $this->_halt($e->getMessage(), $e->getCode(), $sql);
         }
     }
@@ -361,36 +420,42 @@ class Pdo {
      * @param $tableName
      * @param $field
      * @param $condition
+     * @param $type
      * @return array|bool
      */
-    public function getCol($tableName, $field, $condition) {
+    public function getCol($tableName, $field, $condition, $type = '') {
         try {
             if (is_array($condition)) {
                 list($condition, $args) = $this->field_param($condition, ' AND ');
-                $sql = "SELECT {$field} AS result FROM " . $this->qtable($tableName) . " WHERE  {$condition} LIMIT 0,1";
+                $sql = "SELECT {$field} AS result FROM " . $this->qtable($tableName) . " WHERE  {$condition}";
                 $sth = $this->_link->prepare($sql);
                 $sth->execute($args);
             } else {
-                $sql = "SELECT {$field} AS result FROM " . $this->qtable($tableName) . " WHERE  {$condition} LIMIT 0,1";
+                $sql = "SELECT {$field} AS result FROM " . $this->qtable($tableName) . " WHERE  {$condition}";
                 $sth = $this->_link->query($sql);
             }
-            $rows = $sth->fetchAll();
-            $ret = array();
-            foreach ($rows as $row) {
-                $ret[] = $row[$field];
+            $data = array();
+            while ($col = $sth->fetchColumn()) {
+                $data[] = $col;
             }
-            return $ret;
+            $sth->closeCursor();
+            return $data;
         } catch (\PDOException $e) {
+            if ('RETRY' != $type) {
+                $this->reconnect();
+                return $this->getCol($tableName, $field, $condition, 'RETRY');
+            }
             return $this->_halt($e->getMessage(), $e->getCode(), $sql);
         }
     }
 
     /**
-     * @param $sql
-     * @param null $args
+     * @param string $sql
+     * @param $args
+     * @param string $type
      * @return bool
      */
-    public function exec($sql, $args = null) {
+    public function exec($sql, $args = null, $type = '') {
         try {
             if (is_null($args)) {
                 $sth = $this->_link->query($sql);
@@ -399,10 +464,14 @@ class Pdo {
                 $sth = $this->_link->prepare($sql);
                 $sth->execute($_args);
             }
-            $ret = $sth->rowCount();
+            $ret = $sth->fetch();
             $sth->closeCursor();
             return $ret;
         } catch (\PDOException $e) {
+            if ('RETRY' != $type) {
+                $this->reconnect();
+                return $this->exec($sql, $args, 'RETRY');
+            }
             return $this->_halt($e->getMessage(), $e->getCode(), $sql);
         }
     }
@@ -410,9 +479,11 @@ class Pdo {
     /**
      * @param $sql
      * @param $args
+     * @param $retobj
+     * @param $type
      * @return bool
      */
-    public function row($sql, $args = null) {
+    public function row($sql, $args = null, $retobj = false, $type = '') {
         try {
             if (is_null($args)) {
                 $sth = $this->_link->query($sql);
@@ -421,8 +492,18 @@ class Pdo {
                 $sth = $this->_link->prepare($sql);
                 $sth->execute($_args);
             }
-            return $sth->fetch();
+            if ($retobj) {
+                $data = $sth->fetch(\PDO::FETCH_OBJ);
+            } else {
+                $data = $sth->fetch();
+            }
+            $sth->closeCursor();
+            return $data;
         } catch (\PDOException $e) {
+            if ('RETRY' != $type) {
+                $this->reconnect();
+                return $this->row($sql, $args, $retobj, 'RETRY');
+            }
             return $this->_halt($e->getMessage(), $e->getCode(), $sql);
         }
     }
@@ -431,9 +512,11 @@ class Pdo {
      * @param $sql
      * @param $args
      * @param $index
+     * @param $retobj
+     * @param $type
      * @return bool|array
      */
-    public function rowset($sql, $args = null, $index = null) {
+    public function rowset($sql, $args = null, $index = null, $retobj = false, $type = '') {
         try {
             if (is_null($args)) {
                 $sth = $this->_link->query($sql);
@@ -442,12 +525,21 @@ class Pdo {
                 $sth = $this->_link->prepare($sql);
                 $sth->execute($_args);
             }
-            $data = $sth->fetchAll();
+            if ($retobj) {
+                $data = $sth->fetchAll(\PDO::FETCH_OBJ);
+            } else {
+                $data = $sth->fetchAll();
+            }
+            $sth->closeCursor();
             if (is_null($index)) {
                 return $data;
             }
             return $this->array_index($data, $index);
         } catch (\PDOException $e) {
+            if ('RETRY' != $type) {
+                $this->reconnect();
+                return $this->rowset($sql, $args, $index, $retobj, 'RETRY');
+            }
             return $this->_halt($e->getMessage(), $e->getCode(), $sql);
         }
     }
@@ -455,9 +547,11 @@ class Pdo {
     /**
      * @param string $sql
      * @param array $args
-     * @return bool
+     * @param bool $retobj
+     * @param string $type
+     * @return array|bool
      */
-    private function _pages($sql, $args = null) {
+    private function _pages($sql, $args = null, $retobj = false, $type = '') {
         try {
             if (is_null($args)) {
                 $sth = $this->_link->query($sql);
@@ -466,8 +560,18 @@ class Pdo {
                 $sth = $this->_link->prepare($sql);
                 $sth->execute($_args);
             }
-            return $sth->fetchAll();
+            if ($retobj) {
+                $data = $sth->fetchAll(\PDO::FETCH_OBJ);
+            } else {
+                $data = $sth->fetchAll();
+            }
+            $sth->closeCursor();
+            return $data;
         } catch (\PDOException $e) {
+            if ('RETRY' != $type) {
+                $this->reconnect();
+                return $this->_pages($sql, $args, $retobj, 'RETRY');
+            }
             return $this->_halt($e->getMessage(), $e->getCode(), $sql);
         }
     }
@@ -477,23 +581,24 @@ class Pdo {
      * @param array $args
      * @param mixed $pageparm
      * @param int $length
+     * @param bool $retobj
      * @return array|bool
      */
-    public function pages($sql, $args = null, $pageparm = 0, $length = 18) {
+    public function pages($sql, $args = null, $pageparm = 0, $length = 18, $retobj = false) {
         if (is_array($pageparm)) {
             //固定长度分页模式
             $ret = array('rowsets' => array(), 'pagebar' => '');
             if ($pageparm['totals'] <= 0) {
                 return $ret;
             }
-            $start = \Sockphp\DB::page_start($pageparm['curpage'], $length, $pageparm['totals']);
-            $ret['rowsets'] = $this->_pages($sql . " LIMIT {$start},{$length}", $args);;
+            $start = $this->page_start($pageparm['curpage'], $length, $pageparm['totals']);
+            $ret['rowsets'] = $this->_pages($sql . " LIMIT {$start},{$length}", $args, $retobj);
             $ret['pagebar'] = \Sockphp\DB::pagebar($pageparm, $length);;
             return $ret;
         } else {
             //任意长度模式
             $start = $pageparm;
-            return $this->_pages($sql . " LIMIT {$start},{$length}", $args);
+            return $this->_pages($sql . " LIMIT {$start},{$length}", $args, $retobj);
         }
     }
 
@@ -517,11 +622,12 @@ class Pdo {
     }
 
     /**
-     * @param $sql
+     * @param string $sql
      * @param null $args
+     * @param string $type
      * @return bool
      */
-    public function firsts($sql, $args = null) {
+    public function firsts($sql, $args = null, $type = '') {
         try {
             if (is_null($args)) {
                 $sth = $this->_link->query($sql);
@@ -529,18 +635,25 @@ class Pdo {
                 $sth = $this->_link->prepare($sql);
                 $sth->execute($args);
             }
-            return $sth->fetchColumn();
+            $data = $sth->fetchColumn();
+            $sth->closeCursor();
+            return $data;
         } catch (\PDOException $e) {
+            if ('RETRY' != $type) {
+                $this->reconnect();
+                return $this->firsts($sql, $args, 'RETRY');
+            }
             return $this->_halt($e->getMessage(), $e->getCode(), $sql);
         }
     }
 
     /**
-     * @param $sql
+     * @param string $sql
      * @param null $args
+     * @param string $type
      * @return array|bool
      */
-    public function getcols($sql, $args = null) {
+    public function getcols($sql, $args = null, $type = '') {
         try {
             if (is_null($args)) {
                 $sth = $this->_link->query($sql);
@@ -548,29 +661,40 @@ class Pdo {
                 $sth = $this->_link->prepare($sql);
                 $sth->execute($args);
             }
-            $rows = $sth->fetchAll();
-            $ret = array();
-            foreach ($rows as $row) {
-                $ret[] = array_pop($row);
+            $data = array();
+            while ($col = $sth->fetchColumn()) {
+                $data[] = $col;
             }
-            return $ret;
+            $sth->closeCursor();
+            return $data;
         } catch (\PDOException $e) {
+            if ('RETRY' != $type) {
+                $this->reconnect();
+                return $this->getcols($sql, $args, 'RETRY');
+            }
             return $this->_halt($e->getMessage(), $e->getCode(), $sql);
         }
     }
 
+    /**
+     * @return mixed
+     */
     public function start_trans() {
-        $this->_link->beginTransaction();
+        return $this->_link->beginTransaction();
     }
 
     /**
      * @param bool $commit_no_errors
      */
     public function end_trans($commit_no_errors = true) {
-        if ($commit_no_errors) {
-            $this->_link->commit();
-        } else {
-            $this->_link->rollBack();
+        try {
+            if ($commit_no_errors) {
+                $this->_link->commit();
+            } else {
+                $this->_link->rollBack();
+            }
+        } catch (\PDOException $PDOException) {
+            $this->_halt($PDOException->getMessage(), $PDOException->getCode());
         }
     }
 
@@ -585,9 +709,21 @@ class Pdo {
             $this->close();
             $encode = mb_detect_encoding($message, array('ASCII', 'UTF-8', 'GB2312', 'GBK', 'BIG5'));
             $message = mb_convert_encoding($message, 'UTF-8', $encode);
-            echo $message . ' SQL:' . $sql;
+            echo "\r\n" . $message . ' SQL: ' . $sql, intval($code) . "\r\n";
         }
         return false;
+    }
+
+    /**
+     * @param int $page
+     * @param int $ppp
+     * @param int $totalnum
+     * @return int
+     */
+    private function page_start($page, $ppp, $totalnum) {
+        $totalpage = ceil($totalnum / $ppp);
+        $_page = max(1, min($totalpage, intval($page)));
+        return ($_page - 1) * $ppp;
     }
 
     /**
