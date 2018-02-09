@@ -17,6 +17,9 @@ class DB {
         $dsnkey = $_dsn['dsnkey']; //连接池key
         if (isset(self::$used_dbo[$dsnkey])) {
             $dbo = self::$used_dbo[$dsnkey];
+            if(is_null($dbo->_link)) {
+                call_user_func(array($dbo, 'reconnect'));
+            }
         } else {
             if ('mongo' == $_dsn['driver']) {
                 $dbo = new Database\Mongo($_dsn);
@@ -39,6 +42,9 @@ class DB {
         $dsnkey = $_dsn['dsnkey']; //连接池key
         if (isset(self::$used_dbo[$dsnkey])) {
             $dbo = self::$used_dbo[$dsnkey];
+            if(is_null($dbo->_link)) {
+                call_user_func(array($dbo, 'reconnect'));
+            }
         } else {
             $dbo = new \Sockphp\Database\Pdo($_dsn);
             self::$used_dbo[$dsnkey] = $dbo;
