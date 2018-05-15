@@ -2,6 +2,7 @@
 
 namespace Sockphp\Exception;
 
-class DbException extends \Exception {
+class DbException extends \Exception
+{
 
 }

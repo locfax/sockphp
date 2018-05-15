@@ -4,7 +4,8 @@ namespace Sockphp;
 
 use \Sockphp\Exception;
 
-class Rbac {
+class Rbac
+{
 
     const ACL_EVERYONE = 'ACL_EVERYONE';
     const ACL_HAS_ROLE = 'ACL_HAS_ROLE';
@@ -17,7 +18,8 @@ class Rbac {
      * @param string $auth
      * @return bool
      */
-    public static function check($controllerName, $actionName = null, $auth = 'general') {
+    public static function check($controllerName, $actionName = null, $auth = 'general')
+    {
         $_controllerName = strtoupper($controllerName);
         $_actionName = strtolower($actionName);
         $ACT = self::_getACT($_controllerName);
@@ -54,7 +56,8 @@ class Rbac {
      * @param $ACT
      * @return bool
      */
-    private static function _check($_roles, $ACT) {
+    private static function _check($_roles, $ACT)
+    {
         $roles = array_map('strtoupper', $_roles);
         if ($ACT['allow'] == self::ACL_EVERYONE) {
             //if allow all role ,and deny is't set ,then allow
@@ -155,7 +158,8 @@ class Rbac {
      * @return null
      * @throws Exception\Exception
      */
-    private static function _getACT($controllerName) {
+    private static function _getACT($controllerName)
+    {
         static $globalAcl = [];
         if (empty($globalAcl)) {
             $jsonacl = include getini('data/_acl') . strtolower(APPKEY) . 'ACT.php';

@@ -2,7 +2,8 @@
 
 namespace Sockphp;
 
-class App {
+class App
+{
 
     const _dCTL = 'c';
     const _dACT = 'a';
@@ -14,7 +15,8 @@ class App {
     /**
      * @param $root
      */
-    public function steup($root) {
+    public function steup($root)
+    {
         $this->rootnamespace('\\', $root);
     }
 
@@ -22,7 +24,8 @@ class App {
      * @param $key
      * @param $handle
      */
-    public function setHandle($key, $handle) {
+    public function setHandle($key, $handle)
+    {
         $this->handlers[$key] = $handle;
     }
 
@@ -31,14 +34,16 @@ class App {
      * @param $param
      * @return bool|mixed
      */
-    public function doHandle($key, $param) {
+    public function doHandle($key, $param)
+    {
         if (!isset($this->handlers[$key])) {
             return true;
         }
         return call_user_func($this->handlers[$key], $param);
     }
 
-    private function finish() {
+    private function finish()
+    {
         DB::close();
     }
 
@@ -46,7 +51,8 @@ class App {
      * @param $frame
      * @return mixed
      */
-    public function request($frame) {
+    public function request($frame)
+    {
         $res = $this->dispatching($frame);
         $this->finish();
         return $res;
@@ -56,7 +62,8 @@ class App {
      * @param $frame
      * @return mixed
      */
-    public function dispatching($frame) {
+    public function dispatching($frame)
+    {
         $data = json_decode($frame->data, true);
         if (!is_array($data) || !isset($data['type'])) {
             return array('fd' => $frame->fd, 'data' => 'Err: ' . $frame->data);
@@ -79,7 +86,8 @@ class App {
      * @param $frame
      * @return mixed
      */
-    private function execute($controllerName, $actionName, $frame) {
+    private function execute($controllerName, $actionName, $frame)
+    {
         static $controller_pool = array();
         $controllerName = ucfirst($controllerName);
         $actionMethod = self::_actionPrefix . $actionName;
@@ -96,7 +104,8 @@ class App {
         return call_user_func([$controller, $actionMethod]);
     }
 
-    private function parse_routes($uri) {
+    private function parse_routes($uri)
+    {
         static $routes = null;
         if (strpos($uri, 'index.php') !== false) {
             $uri = substr($uri, strpos($uri, 'index.php') + 10);
@@ -131,7 +140,8 @@ class App {
      * @param null $vars
      * @return mixed
      */
-    public static function mergeVars($group, $vars = null) {
+    public static function mergeVars($group, $vars = null)
+    {
         static $_CDATA = array(APPKEY => array('dsn' => null, 'cfg' => null, 'data' => null));
         $appkey = APPKEY;
         if (is_null($vars)) {
@@ -149,7 +159,8 @@ class App {
      * @param $namespace
      * @param $path
      */
-    public function rootnamespace($namespace, $path) {
+    public function rootnamespace($namespace, $path)
+    {
         $namespace = trim($namespace, '\\');
         $path = rtrim($path, '/');
         $loader = function ($classname) use ($namespace, $path) {

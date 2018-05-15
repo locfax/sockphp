@@ -2,7 +2,8 @@
 
 namespace Sockphp;
 
-abstract class Crontab {
+abstract class Crontab
+{
 
     use Traits\Context;
 
@@ -10,7 +11,9 @@ abstract class Crontab {
     const KEY_PROC_TIME = '__proc_start__';
     protected $name;
     protected $timeout = 600;
+
     abstract protected function execute();
+
     private static $logger;
 
     /**
@@ -18,7 +21,8 @@ abstract class Crontab {
      *
      * @return bool
      */
-    public function start() {
+    public function start()
+    {
         $try = $this->tryStart();
         $this->log('debug', 'try start', [
             'result' => (int)$try,
@@ -54,7 +58,8 @@ abstract class Crontab {
     /**
      * 任务执行完毕.
      */
-    public function stop() {
+    public function stop()
+    {
         $this->removeContext(self::KEY_PROC_ID);
         $this->removeContext(self::KEY_PROC_TIME);
         //$this->saveContext();
@@ -67,7 +72,8 @@ abstract class Crontab {
      *
      * @return bool
      */
-    protected function tryStart() {
+    protected function tryStart()
+    {
         // 检查是否达到预定时间
         try {
             if (!$this->testTimer()) {
@@ -125,11 +131,13 @@ abstract class Crontab {
      *
      * @return bool
      */
-    protected function testTimer() {
+    protected function testTimer()
+    {
         return false;
     }
 
-    protected function log($level, $message, array $context = []) {
+    protected function log($level, $message, array $context = [])
+    {
         if (self::$logger) {
             $defaults = [
                 'class' => get_class($this),
@@ -145,11 +153,13 @@ abstract class Crontab {
         }
     }
 
-    protected function getName() {
+    protected function getName()
+    {
         return $this->name ?: get_class($this);
     }
 
-    public static function setLogger(\Psr\Log\LoggerInterface $logger) {
+    public static function setLogger(\Psr\Log\LoggerInterface $logger)
+    {
         self::$logger = $logger;
     }
 }

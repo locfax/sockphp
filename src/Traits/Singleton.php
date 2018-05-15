@@ -4,15 +4,18 @@ namespace Sockphp\Traits;
 
 use \Sockphp\Exception;
 
-trait Singleton {
+trait Singleton
+{
 
     protected static $instances = [];
 
-    public function __clone() {
+    public function __clone()
+    {
         throw new Exception\Exception('Cloning ' . __CLASS__ . ' is not allowed');
     }
 
-    public static function getInstance($param = null) {
+    public static function getInstance($param = null)
+    {
         $class = get_called_class();
         if (!isset(static::$instances[$class])) {
             static::$instances[$class] = new static($param);
@@ -20,7 +23,8 @@ trait Singleton {
         return static::$instances[$class];
     }
 
-    public static function clearInstance() {
+    public static function clearInstance()
+    {
         $class = get_called_class();
         unset(static::$instances[$class]);
     }
