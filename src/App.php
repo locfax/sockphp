@@ -66,7 +66,7 @@ class App
     {
         $data = json_decode($frame->data, true);
         if (!is_array($data) || !isset($data['type'])) {
-            return array('fd' => $frame->fd, 'data' => 'Err: ' . $frame->data);
+            return ['fd' => $frame->fd, 'data' => 'Err: ' . $frame->data];
         }
         $router = $this->parse_routes($data['type']);
 
@@ -88,7 +88,7 @@ class App
      */
     private function execute($controllerName, $actionName, $frame)
     {
-        static $controller_pool = array();
+        static $controller_pool = [];
         $controllerName = ucfirst($controllerName);
         $actionMethod = self::_actionPrefix . $actionName;
 
@@ -142,7 +142,7 @@ class App
      */
     public static function mergeVars($group, $vars = null)
     {
-        static $_CDATA = array(APPKEY => array('dsn' => null, 'cfg' => null, 'data' => null));
+        static $_CDATA = [APPKEY => ['dsn' => null, 'cfg' => null, 'data' => null]];
         $appkey = APPKEY;
         if (is_null($vars)) {
             return $_CDATA[$appkey][$group];

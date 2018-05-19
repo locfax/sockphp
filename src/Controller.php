@@ -20,10 +20,10 @@ class Controller
      */
     public function __call($name, $arguments)
     {
-        $res = array(
+        $res = [
             'errcode' => 1,
             'errmsg' => 'Action ' . $name . '不存在!'
-        );
+        ];
         return json_encode($res);
     }
 
