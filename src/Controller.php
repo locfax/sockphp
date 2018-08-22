@@ -4,10 +4,11 @@ namespace Sockphp;
 
 class Controller
 {
-
-    protected $server = null;
     protected $frame = null;
 
+    /**
+     * @param $frame
+     */
     public function init($frame)
     {
         $this->frame = $frame;

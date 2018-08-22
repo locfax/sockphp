@@ -64,6 +64,9 @@ class App
      */
     public function dispatching($frame)
     {
+        if (!$frame->data) {
+            return '';
+        }
         $data = json_decode($frame->data, true);
         if (!is_array($data) || !isset($data['type'])) {
             return ['fd' => $frame->fd, 'data' => 'Err: ' . $frame->data];
@@ -104,6 +107,10 @@ class App
         return call_user_func([$controller, $actionMethod]);
     }
 
+    /**
+     * @param $uri
+     * @return array|bool
+     */
     private function parse_routes($uri)
     {
         static $routes = null;
