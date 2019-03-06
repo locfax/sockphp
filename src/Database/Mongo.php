@@ -14,10 +14,13 @@ class Mongo
         $this->close();
     }
 
+
     /**
+     * Mongo constructor.
      * @param $config
+     * @param bool $repeat
      */
-    public function __construct($config)
+    public function __construct($config, $repeat = false)
     {
         if (is_null($this->_config)) {
             $this->_config = $config;
@@ -26,21 +29,21 @@ class Mongo
             $this->_link = new \MongoClient($config['dsn'], ["connect" => true]);
             $this->_client = $this->_link->selectDB($config['database']);
         } catch (\MongoConnectionException $e) {
-            $this->_halt('client is not connected!');
+            if ($repeat == false) {
+                $this->__construct($config, true);
+            } else {
+                $this->close();
+                $this->_halt('client is not connected!');
+            }
         }
-    }
-
-    public function reconnect()
-    {
-        $this->__construct($this->_config);
     }
 
     public function close()
     {
         if ($this->_link) {
             $this->_link->close();
-            $this->_client = null;
         }
+        $this->_link = $this->_client = null;
     }
 
     /**
@@ -57,14 +60,10 @@ class Mongo
      * @param $table
      * @param array $document
      * @param bool $retid
-     * @param string $type
      * @return bool|string
      */
-    public function create($table, $document = [], $retid = false, $type = '')
+    public function create($table, $document = [], $retid = false)
     {
-        if (is_null($this->_client)) {
-            return $this->_halt('db server is not connected!', 0, $table);
-        }
         try {
             if (isset($document['_id'])) {
                 if (!is_object($document['_id'])) {
@@ -81,10 +80,6 @@ class Mongo
             }
             return $ret['ok'];
         } catch (\Exception $ex) {
-            if ('RETRY' !== $type) {
-                $this->reconnect();
-                return $this->create($table, $document, $retid, 'RETRY');
-            }
             return $this->_halt($ex->getMessage(), $ex->getCode());
         }
     }
@@ -92,14 +87,10 @@ class Mongo
     /**
      * @param $table
      * @param array $document
-     * @param string $type
      * @return bool
      */
-    public function replace($table, $document = [], $type = '')
+    public function replace($table, $document = [])
     {
-        if (is_null($this->_client)) {
-            return $this->_halt('db server is not connected!', 0, $table);
-        }
         try {
             if (isset($document['_id'])) {
                 $document['_id'] = new \MongoId($document['_id']);
@@ -108,10 +99,6 @@ class Mongo
             $ret = $collection->save($document);
             return $ret['ok'];
         } catch (\Exception $ex) {
-            if ('RETRY' !== $type) {
-                $this->reconnect();
-                return $this->replace($table, $document, 'RETRY');
-            }
             return $this->_halt($ex->getMessage(), $ex->getCode());
         }
     }
@@ -121,14 +108,10 @@ class Mongo
      * @param array $document
      * @param array $condition
      * @param string $options
-     * @param string $type
      * @return bool
      */
-    public function update($table, $document = [], $condition = [], $options = 'set', $type = '')
+    public function update($table, $document = [], $condition = [], $options = 'set')
     {
-        if (is_null($this->_client)) {
-            return $this->_halt('db server is not connected!', 0, $table);
-        }
         try {
             if (isset($condition['_id'])) {
                 $condition['_id'] = new \MongoId($condition['_id']);
@@ -157,10 +140,6 @@ class Mongo
             }
             return $ret;
         } catch (\Exception $ex) {
-            if ('RETRY' !== $type) {
-                $this->reconnect();
-                return $this->update($table, $document, $condition, $options, 'RETRY');
-            }
             return $this->_halt($ex->getMessage(), $ex->getCode());
         }
     }
@@ -169,14 +148,10 @@ class Mongo
      * @param $table
      * @param array $condition
      * @param bool $muti
-     * @param string $type
      * @return bool
      */
-    public function remove($table, $condition = [], $muti = false, $type = '')
+    public function remove($table, $condition = [], $muti = false)
     {
-        if (is_null($this->_client)) {
-            return $this->_halt('db server is not connected!', 0, $table);
-        }
         try {
             if (isset($condition['_id'])) {
                 $condition['_id'] = new \MongoId($condition['_id']);
@@ -189,10 +164,6 @@ class Mongo
             }
             return $ret;
         } catch (\Exception $ex) {
-            if ('RETRY' !== $type) {
-                $this->reconnect();
-                return $this->remove($table, $condition, $muti, 'RETRY');
-            }
             return $this->_halt($ex->getMessage(), $ex->getCode());
         }
     }
@@ -201,14 +172,10 @@ class Mongo
      * @param $table
      * @param array $fields
      * @param array $condition
-     * @param string $type
      * @return mixed
      */
-    public function findOne($table, $fields = [], $condition = [], $type = '')
+    public function findOne($table, $fields = [], $condition = [])
     {
-        if (is_null($this->_client)) {
-            return $this->_halt('db server is not connected!', 0, $table);
-        }
         try {
             if (isset($condition['_id'])) {
                 $condition['_id'] = new \MongoId($condition['_id']);
@@ -220,10 +187,6 @@ class Mongo
             }
             return $cursor;
         } catch (\Exception $ex) {
-            if ('RETRY' !== $type) {
-                $this->reconnect();
-                return $this->findOne($table, $fields, $condition, 'RETRY');
-            }
             return $this->_halt($ex->getMessage(), $ex->getCode());
         }
     }
@@ -232,14 +195,10 @@ class Mongo
      * @param $table
      * @param array $fields
      * @param array $query
-     * @param string $type
      * @return array|bool|\Generator
      */
-    public function findAll($table, $fields = [], $query = [], $type = '')
+    public function findAll($table, $fields = [], $query = [])
     {
-        if (is_null($this->_client)) {
-            return $this->_halt('db server is not connected!', 0, $table);
-        }
         try {
             $collection = $this->_client->selectCollection($table);
             if (isset($query['query'])) {
@@ -256,12 +215,9 @@ class Mongo
                 $row['_id'] = $row['nid'] = $row['_id']->{'$id'};
                 $rowsets[] = $row;
             }
+            $cursor = null;
             return $rowsets;
         } catch (\Exception $ex) {
-            if ('RETRY' !== $type) {
-                $this->reconnect();
-                return $this->findAll($table, $fields, $query, 'RETRY');
-            }
             return $this->_halt($ex->getMessage(), $ex->getCode());
         }
     }
@@ -272,14 +228,10 @@ class Mongo
      * @param $condition
      * @param int $offset
      * @param int $length
-     * @param string $type
      * @return array|bool
      */
-    private function _page($table, $fields, $condition, $offset = 0, $length = 18, $type = '')
+    private function _page($table, $fields, $condition, $offset = 0, $length = 18)
     {
-        if (is_null($this->_client)) {
-            return $this->_halt('db server is not connected!', 0, $table);
-        }
         try {
             $collection = $this->_client->selectCollection($table);
             if ('fields' == $condition['type']) {
@@ -294,6 +246,7 @@ class Mongo
                     $row['_id'] = $row['nid'] = $row['_id']->{'$id'};
                     $rowsets[] = $row;
                 }
+                $cursor = null;
                 return $rowsets;
             } else {
                 //内镶文档查询
@@ -304,10 +257,6 @@ class Mongo
                 return $cursor[$fields];
             }
         } catch (\Exception $ex) {
-            if ('RETRY' !== $type) {
-                $this->reconnect();
-                return $this->_page($table, $fields, $condition, $offset, $length, 'RETRY');
-            }
             return $this->_halt($ex->getMessage(), $ex->getCode());
         }
     }
@@ -342,14 +291,10 @@ class Mongo
     /**
      * @param $table
      * @param array $condition
-     * @param string $type
      * @return bool
      */
-    public function count($table, $condition = [], $type = '')
+    public function count($table, $condition = [])
     {
-        if (is_null($this->_client)) {
-            return $this->_halt('db server is not connected!', 0, $table);
-        }
         try {
             $collection = $this->_client->selectCollection($table);
             if (isset($condition['_id'])) {
@@ -357,10 +302,6 @@ class Mongo
             }
             return $collection->count($condition);
         } catch (\Exception $ex) {
-            if ('RETRY' !== $type) {
-                $this->reconnect();
-                return $this->count($table, $condition, 'RETRY');
-            }
             return $this->_halt($ex->getMessage(), $ex->getCode());
         }
     }
